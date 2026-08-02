@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   // Only allow POST
@@ -31,13 +33,12 @@ export default async function handler(req, res) {
       id: Date.now() + Math.floor(Math.random() * 1000)
     };
 
-    // Store in KV list (keep last 1000 entries)
-    await kv.lpush('scores', JSON.stringify(record));
-    await kv.ltrim('scores', 0, 999);
+    // Store in Redis list (keep last 1000 entries)
+    await redis.lpush('scores', JSON.stringify(record));
+    await redis.ltrim('scores', 0, 999);
 
     res.status(200).json({ success: true, id: record.id });
   } catch (err) {
-    // If KV is not configured, return error (student page will fallback to score code)
-    res.status(500).json({ error: 'Storage not available', fallback: true });
+    res.status(500).json({ error: 'Storage not available', fallback: true, detail: err.message });
   }
 }
