@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英语词汇练习平台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 32px;
+    }
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .header p {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    .card-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #888;
+    }
+    .card-tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 8px;
+      background: #f0f0f0;
+      color: #666;
+    }
+    .card-tag.new { background: #e3f2fd; color: #1976d2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📖 英语词汇练习</h1>
+      <p>选择一个练习开始吧！做完自动提交成绩给老师</p>
+    </div>
+
+    <a href="out-and-about-interactive-practice.html" class="card">
+      <div class="card-icon">🏕️</div>
+      <div class="card-title">Out & About 综合练习</div>
+      <div class="card-desc">户外活动、旅行、海滩等主题词汇，含 5 种练习模式</div>
+      <span class="card-tag">32 个短语</span>
+    </a>
+
+    <a href="think1-u1-interactive-practice.html" class="card">
+      <div class="card-icon">📘</div>
+      <div class="card-title">THINK 1 — Unit 1</div>
+      <div class="card-desc">兴趣爱好、频率副词、日常活动，按 P12-P19 分类</div>
+      <span class="card-tag">80+ 词汇</span>
+    </a>
+
+    <a href="think1-u2-interactive-practice.html" class="card">
+      <div class="card-icon">💰</div>
+      <div class="card-title">THINK 1 — Unit 2</div>
+      <div class="card-desc">购物与货币、感官动词、服装词汇，按 P20-P27 分类</div>
+      <span class="card-tag">90+ 词汇</span>
+    </a>
+
+    <a href="od2-u12-interactive-practice.html" class="card">
+      <div class="card-icon">📔</div>
+      <div class="card-title">OD2 — Unit 12</div>
+      <div class="card-desc">A juice cartoon's diary · 核心词汇 + 阅读词汇</div>
+      <span class="card-tag new">51 词汇 · 5 种练习</span>
+    </a>
+
+    <!-- 教师入口已隐藏：学生不应看到后台链接 -->
+
+  </div>
+</body>
+</html>
