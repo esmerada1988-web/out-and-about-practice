@@ -66,7 +66,7 @@
     background: white;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     white-space: nowrap;
   }
   .filter-chip.active {
@@ -93,7 +93,7 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     text-align: center;
   }
   .mode-btn.active {
@@ -152,6 +152,9 @@
     transform-style: preserve-3d;
     transition: transform 0.6s;
     margin: 0 auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
   }
   .flashcard.flipped { transform: rotateY(180deg); }
   .flashcard-front, .flashcard-back {
@@ -195,7 +198,7 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   }
   .btn-know { background: var(--c-green); color: white; }
   .btn-dont { background: var(--c-red); color: white; }
@@ -216,7 +219,7 @@
     text-align: center;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     user-select: none;
   }
   .match-item:hover { border-color: var(--c-primary-light); }
@@ -276,7 +279,7 @@
     border: 2px solid var(--c-primary-light);
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   }
   .word-chip:hover { background: var(--c-primary-light); color: white; }
   .word-chip.used { opacity: 0.3; pointer-events: none; }
@@ -301,7 +304,7 @@
     background: white;
     font-size: 15px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     text-align: left;
   }
   .mc-option:hover { border-color: var(--c-primary-light); }
@@ -336,7 +339,7 @@
     color: white;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   }
   .so-word:hover { opacity: 0.8; }
   .so-word.in-target { background: var(--c-green); }
@@ -405,7 +408,7 @@
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   }
   .btn-primary { background: var(--c-primary); color: white; }
   .btn-secondary { background: white; color: var(--c-primary); border: 2px solid var(--c-primary); }
@@ -458,10 +461,25 @@
     font-weight: 600;
     cursor: pointer;
     margin-top: 8px;
-    transition: all 0.2s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
   }
   .copy-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,184,148,0.3); }
   .copy-btn:active { transform: scale(0.98); }
+  /* 禁用触屏设备的 hover transform，避免布局重排卡顿 */
+  @media (hover: none) {
+    .mode-btn:hover:not(.active),
+    .flashcard-btn:hover,
+    .match-item:hover,
+    .word-chip:hover,
+    .mc-option:hover,
+    .so-word:hover,
+    .action-btn:hover,
+    .copy-btn:hover,
+    .filter-chip:hover:not(.active) {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  }
   .grammar-tip {
     background: rgba(108,92,231,0.08);
     border-left: 4px solid var(--c-primary);
@@ -1219,6 +1237,6 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 updateStars();
 goHome();
 </script>
-<script src="js/auto-submit.js?v=2"></script>
+<script src="js/auto-submit.js?v=3"></script>
 </body>
 </html>
