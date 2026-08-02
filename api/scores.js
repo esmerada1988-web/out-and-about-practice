@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   // Only allow GET
@@ -14,14 +16,13 @@ export default async function handler(req, res) {
     }
 
     // Get last 500 scores
-    const rawScores = await kv.lrange('scores', 0, 499);
-    const scores = rawScores.map(s => {
-      try { return JSON.parse(s); } catch { return null; }
+    const rawScores = await redis.lrange('scores', 0, 499);
+    const scores = (rawScores || []).map(s => {
+      try { return typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; }
     }).filter(Boolean);
 
     res.status(200).json({ scores, count: scores.length });
   } catch (err) {
-    // If KV not configured
-    res.status(500).json({ error: 'Storage not available', scores: [] });
+    res.status(500).json({ error: 'Storage not available', scores: [], detail: err.message });
   }
 }
