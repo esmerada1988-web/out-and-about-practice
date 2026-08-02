@@ -167,6 +167,22 @@
   <p>学生做完练习自动提交成绩，这里一键查看全部</p>
 </div>
 
+<!-- Access Code Management Panel -->
+<div class="panel" style="border:2px solid var(--c-orange);border-radius:16px;">
+  <h2>🔑 访问密码管理</h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+    <input type="password" id="acTeacherKey" placeholder="教师密钥" style="flex:1;min-width:150px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
+    <button class="btn btn-secondary" onclick="getAccessCode()">🔍 查看当前密码</button>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="newAccessCode" placeholder="设置新密码（如 abc123）" style="flex:1;min-width:150px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
+    <button class="btn btn-primary" onclick="setAccessCode()">🔑 设置/修改密码</button>
+  </div>
+  <div class="input-hint" id="acStatus" style="color:var(--c-text-light);">
+    💡 设置密码后，学生打开练习页面需要输入此密码才能进入。修改密码后旧密码立即失效。
+  </div>
+</div>
+
 <!-- Online Auto-Fetch Panel -->
 <div class="panel" style="border:2px solid var(--c-green);border-radius:16px;">
   <h2>🟢 在线成绩（自动提交）</h2>
@@ -330,8 +346,71 @@ try {
   const savedKey = localStorage.getItem('teacherKey');
   if (savedKey) {
     document.getElementById('teacherKey').value = savedKey;
+    var acKey = document.getElementById('acTeacherKey');
+    if (acKey) acKey.value = savedKey;
   }
 } catch(e) {}
+
+// Sync teacher key between two inputs
+(function(){
+  var tk = document.getElementById('teacherKey');
+  var ac = document.getElementById('acTeacherKey');
+  if (tk && ac) {
+    tk.addEventListener('input', function(){ ac.value = this.value; });
+    ac.addEventListener('input', function(){ tk.value = this.value; });
+  }
+})();
+
+// ===== ACCESS CODE MANAGEMENT =====
+function getAccessCode() {
+  var key = document.getElementById('acTeacherKey').value.trim();
+  if (!key) { showToast('请输入教师密钥'); return; }
+  try { localStorage.setItem('teacherKey', key); } catch(e) {}
+  var statusEl = document.getElementById('acStatus');
+  statusEl.innerHTML = '⏳ 查询中...';
+  fetch('/api/auth?key=' + encodeURIComponent(key) + '&getcode=1')
+    .then(function(r) {
+      if (r.status === 401) throw new Error('密钥错误');
+      return r.json();
+    })
+    .then(function(data) {
+      if (data.accessCode) {
+        document.getElementById('newAccessCode').value = data.accessCode;
+        statusEl.innerHTML = '✅ 当前密码：<b>' + data.accessCode + '</b>（学生用此密码进入练习页）';
+      } else {
+        statusEl.innerHTML = '⚠️ 尚未设置密码，学生暂时无法进入练习页。请在下方设置一个密码。';
+      }
+    })
+    .catch(function(err) {
+      statusEl.innerHTML = '❌ ' + err.message;
+    });
+}
+
+function setAccessCode() {
+  var key = document.getElementById('acTeacherKey').value.trim();
+  var code = document.getElementById('newAccessCode').value.trim();
+  if (!key) { showToast('请输入教师密钥'); return; }
+  if (!code) { showToast('请输入新密码'); return; }
+  try { localStorage.setItem('teacherKey', key); } catch(e) {}
+  var statusEl = document.getElementById('acStatus');
+  statusEl.innerHTML = '⏳ 设置中...';
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacherKey: key, accessCode: code })
+  })
+    .then(function(r) {
+      if (r.status === 401) throw new Error('密钥错误');
+      return r.json();
+    })
+    .then(function(data) {
+      statusEl.innerHTML = '✅ 密码已设置为：<b>' + data.accessCode + '</b>，学生可使用此密码进入练习页';
+      showToast('密码设置成功！');
+    })
+    .catch(function(err) {
+      statusEl.innerHTML = '❌ ' + err.message;
+    });
+}
 
 // Load saved records from localStorage
 function loadSaved() {
