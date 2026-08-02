@@ -1,9 +1,16 @@
 {
-  "name": "english-practice",
+  "name": "out-and-about-practice",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "description": "Interactive English vocabulary practice with score tracking",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed - static HTML files'",
+    "deploy": "vercel --prod"
+  },
   "dependencies": {
-    "@vercel/kv": "^1.0.1"
+    "@upstash/redis": "^1.34.3"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
   }
 }
