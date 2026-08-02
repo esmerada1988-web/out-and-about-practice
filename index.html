@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Out & About 交互式练习</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --c-bg: #f5f7fa;
+    --c-card: #ffffff;
+    --c-primary: #4A90D9;
+    --c-primary-light: #E8F1FC;
+    --c-green: #52c41a;
+    --c-green-light: #f6ffed;
+    --c-red: #ff4d4f;
+    --c-red-light: #fff2f0;
+    --c-orange: #fa8c16;
+    --c-orange-light: #fff7e6;
+    --c-purple: #722ed1;
+    --c-purple-light: #f9f0ff;
+    --c-text: #2c3e50;
+    --c-text-light: #8492a6;
+    --c-border: #e8ecf1;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+  }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  /* ===== Header ===== */
+  .header {
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius);
+    color: #fff;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-lg);
+  }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 14px; opacity: 0.85; }
+  .header .stars { font-size: 20px; margin-top: 12px; }
+
+  /* ===== Home Screen ===== */
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .topic-card {
+    background: var(--c-card);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+    text-align: center;
+  }
+  .topic-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--c-primary);
+  }
+  .topic-card .icon { font-size: 40px; margin-bottom: 12px; }
+  .topic-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .topic-card .desc { font-size: 12px; color: var(--c-text-light); }
+  .topic-card .progress-bar {
+    width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px;
+    margin-top: 12px; overflow: hidden;
+  }
+  .topic-card .progress-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.5s;
+  }
+
+  /* ===== Mode Selector ===== */
+  .mode-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .mode-btn {
+    padding: 10px 20px;
+    border-radius: 24px;
+    border: 2px solid var(--c-border);
+    background: var(--c-card);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-btn:hover { border-color: var(--c-primary); }
+  .mode-btn.active {
+    background: var(--c-primary);
+    color: #fff;
+    border-color: var(--c-primary);
+  }
+
+  /* ===== Exercise Area ===== */
+  .exercise-area {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--c-card);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow);
+    min-height: 400px;
+  }
+  .ex-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .ex-title { font-size: 18px; font-weight: 600; }
+  .ex-counter { font-size: 14px; color: var(--c-text-light); }
+  .ex-progress {
+    width: 100%; height: 8px; background: #f0f0f0;
+    border-radius: 4px; margin-bottom: 24px; overflow: hidden;
+  }
+  .ex-progress-fill {
+    height: 100%; background: var(--c-primary);
+    border-radius: 4px; transition: width 0.3s;
+  }
+
+  /* ===== Flashcard ===== */
+  .flashcard-container {
+    perspective: 1000px;
+    width: 100%; max-width: 500px; margin: 0 auto;
+  }
+  .flashcard {
+    width: 100%; height: 220px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    cursor: pointer;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .flashcard-face {
+    position: absolute; width: 100%; height: 100%;
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    backface-visibility: hidden;
+    box-shadow: var(--shadow);
+  }
+  .flashcard-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+  }
+  .flashcard-back {
+    background: var(--c-card);
+    border: 2px solid var(--c-primary);
+    transform: rotateY(180deg);
+  }
+  .flashcard-en { font-size: 28px; font-weight: 700; }
+  .flashcard-grammar { font-size: 12px; opacity: 0.7; margin-top: 8px; }
+  .flashcard-zh { font-size: 24px; color: var(--c-primary); }
+  .flashcard-example { font-size: 14px; color: var(--c-text-light); margin-top: 12px; text-align: center; }
+  .flashcard-hint { font-size: 12px; color: var(--c-text-light); margin-top: 16px; }
+
+  .flashcard-controls {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 24px;
+  }
+  .fc-btn {
+    padding: 12px 28px; border-radius: 24px; border: none;
+    font-size: 15px; cursor: pointer; transition: all 0.2s;
+    font-weight: 600;
+  }
+  .fc-btn-know { background: var(--c-green-light); color: var(--c-green); border: 2px solid var(--c-green); }
+  .fc-btn-know:hover { background: var(--c-green); color: #fff; }
+  .fc-btn-unknown { background: var(--c-red-light); color: var(--c-red); border: 2px solid var(--c-red); }
+  .fc-btn-unknown:hover { background: var(--c-red); color: #fff; }
+
+  /* ===== Matching ===== */
+  .match-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .match-item {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 2px solid var(--c-border);
+    background: var(--c-card);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 15px;
+    text-align: center;
+  }
+  .match-item:hover { border-color: var(--c-primary); }
+  .match-item.selected {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+  }
+  .match-item.matched {
+    border-color: var(--c-green);
+    background: var(--c-green-light);
+    cursor: default;
+    opacity: 0.5;
+  }
+  .match-item.wrong {
+    border-color: var(--c-red);
+    background: var(--c-red-light);
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* ===== Fill Blank ===== */
+  .fill-blank-q {
+    font-size: 20px; line-height: 2; margin-bottom: 24px;
+    text-align: center; padding: 20px;
+  }
+  .fill-input {
+    display: inline-block;
+    border: none;
+    border-bottom: 3px solid var(--c-primary);
+    font-size: 18px;
+    padding: 4px 12px;
+    width: 160px;
+    text-align: center;
+    outline: none;
+    background: var(--c-primary-light);
+    border-radius: 4px 4px 0 0;
+  }
+  .fill-input:focus { border-bottom-color: var(--c-purple); }
+  .fill-input.correct { border-bottom-color: var(--c-green); background: var(--c-green-light); }
+  .fill-input.wrong { border-bottom-color: var(--c-red); background: var(--c-red-light); }
+  .fill-hint {
+    font-size: 13px; color: var(--c-text-light);
+    text-align: center; margin-bottom: 16px;
+  }
+  .fill-feedback {
+    margin-top: 16px; padding: 12px 16px;
+    border-radius: 8px; font-size: 14px; text-align: center;
+    display: none;
+  }
+  .fill-feedback.show { display: block; }
+  .fill-feedback.ok { background: var(--c-green-light); color: var(--c-green); }
+  .fill-feedback.no { background: var(--c-red-light); color: var(--c-red); }
+
+  /* ===== Multiple Choice ===== */
+  .mc-question {
+    font-size: 18px; margin-bottom: 20px;
+    padding: 16px; background: var(--c-primary-light);
+    border-radius: 12px; line-height: 1.6;
+  }
+  .mc-options { display: flex; flex-direction: column; gap: 10px; }
+  .mc-option {
+    padding: 14px 20px;
+    border: 2px solid var(--c-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mc-option:hover { border-color: var(--c-primary); background: var(--c-primary-light); }
+  .mc-option .letter {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; display: flex;
+    align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; flex-shrink: 0;
+  }
+  .mc-option.correct {
+    border-color: var(--c-green); background: var(--c-green-light);
+  }
+  .mc-option.correct .letter { background: var(--c-green); color: #fff; }
+  .mc-option.wrong {
+    border-color: var(--c-red); background: var(--c-red-light);
+  }
+  .mc-option.wrong .letter { background: var(--c-red); color: #fff; }
+  .mc-option.disabled { cursor: not-allowed; pointer-events: none; }
+
+  /* ===== Sentence Ordering ===== */
+  .so-target {
+    min-height: 60px;
+    border: 2px dashed var(--c-primary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  .so-target .placeholder {
+    color: var(--c-text-light); font-size: 14px;
+  }
+  .so-word {
+    padding: 10px 18px;
+    background: var(--c-primary-light);
+    border: 2px solid var(--c-primary);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .so-word:hover { transform: scale(1.05); }
+  .so-word.used { opacity: 0.3; pointer-events: none; }
+  .so-bank {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center;
+  }
+  .so-placed {
+    background: var(--c-purple-light);
+    border-color: var(--c-purple);
+  }
+
+  /* ===== Feedback ===== */
+  .feedback-box {
+    margin-top: 24px; padding: 20px;
+    border-radius: 12px; text-align: center;
+    display: none;
+  }
+  .feedback-box.show { display: block; animation: popIn 0.3s; }
+  @keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .feedback-box.ok { background: var(--c-green-light); color: var(--c-green); }
+  .feedback-box.no { background: var(--c-red-light); color: var(--c-red); }
+  .feedback-box h4 { font-size: 20px; margin-bottom: 8px; }
+  .feedback-box p { font-size: 14px; }
+
+  /* ===== Action Buttons ===== */
+  .action-bar {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 24px;
+  }
+  .action-btn {
+    padding: 12px 32px; border-radius: 24px;
+    border: none; font-size: 15px; cursor: pointer;
+    font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--c-primary); color: #fff; }
+  .btn-primary:hover { background: #3a7bc8; }
+  .btn-secondary { background: #f0f0f0; color: var(--c-text); }
+  .btn-secondary:hover { background: #e0e0e0; }
+
+  /* ===== Results ===== */
+  .results-screen {
+    text-align: center; padding: 40px 20px;
+  }
+  .results-score {
+    font-size: 64px; font-weight: 700;
+    margin: 20px 0;
+  }
+  .results-score .total { font-size: 28px; color: var(--c-text-light); }
+  .results-msg { font-size: 18px; margin-bottom: 24px; }
+  .results-detail {
+    display: flex; gap: 16px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .results-stat {
+    background: var(--c-bg); border-radius: 12px;
+    padding: 16px 24px; min-width: 120px;
+  }
+  .results-stat .num { font-size: 28px; font-weight: 700; }
+  .results-stat .label { font-size: 12px; color: var(--c-text-light); }
+
+  /* ===== Badge ===== */
+  .badge {
+    display: inline-block; padding: 2px 10px;
+    border-radius: 10px; font-size: 11px;
+    font-weight: 600; margin-left: 6px;
+  }
+  .badge-theme { background: var(--c-purple-light); color: var(--c-purple); }
+  .badge-grammar { background: var(--c-orange-light); color: var(--c-orange); }
+  .badge-opinion { background: var(--c-green-light); color: var(--c-green); }
+
+  /* ===== Topic Filter ===== */
+  .topic-filter {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center; margin-bottom: 20px;
+  }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 16px;
+    border: 2px solid var(--c-border);
+    background: var(--c-card); font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .filter-chip:hover { border-color: var(--c-primary); }
+  .filter-chip.active {
+    background: var(--c-primary); color: #fff;
+    border-color: var(--c-primary);
+  }
+
+  /* ===== Wrong List ===== */
+  .wrong-list {
+    text-align: left; margin-top: 24px;
+  }
+  .wrong-list h4 { font-size: 16px; margin-bottom: 12px; }
+  .wrong-item {
+    padding: 12px 16px; margin-bottom: 8px;
+    background: var(--c-red-light); border-radius: 8px;
+    font-size: 14px;
+  }
+  .wrong-item .answer { color: var(--c-green); font-weight: 600; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🏕️ Out & About 交互式练习</h1>
+  <p>4大主题 · 32个核心短语 · 5种练习模式</p>
+  <div class="stars" id="starsDisplay">⭐ 0 / 100</div>
+</div>
+
+<!-- Main Content -->
+<div id="mainContent">
+
+  <!-- Topic Filter -->
+  <div class="topic-filter" id="topicFilter">
+    <div class="filter-chip active" data-topic="all">全部</div>
+    <div class="filter-chip" data-topic="outdoor">🏕️ 露营徒步</div>
+    <div class="filter-chip" data-topic="mountain">🏔️ 山居滑雪</div>
+    <div class="filter-chip" data-topic="travel">✈️ 旅行城市</div>
+    <div class="filter-chip" data-topic="beach">🏖️ 海滩水上</div>
+    <div class="filter-chip" data-topic="adjectives">⚖️ 评价形容词</div>
+    <div class="filter-chip" data-topic="opinion">💬 观点表达</div>
+  </div>
+
+  <!-- Mode Selector -->
+  <div class="mode-bar" id="modeBar">
+    <div class="mode-btn active" data-mode="flashcard">📇 翻卡记忆</div>
+    <div class="mode-btn" data-mode="matching">🔗 连线匹配</div>
+    <div class="mode-btn" data-mode="fillblank">✏️ 填空题</div>
+    <div class="mode-btn" data-mode="choice">📝 选择题</div>
+    <div class="mode-btn" data-mode="ordering">🔢 句子排序</div>
+  </div>
+
+  <!-- Exercise Area -->
+  <div class="exercise-area" id="exerciseArea">
+    <!-- Dynamic content -->
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const ALL_DATA = [
+  // Outdoor Adventures
+  { en: "put up the tent", zh: "搭帐篷", grammar: "put up + 名词", topic: "outdoor",
+    example: "We put up the tent near the lake." },
+  { en: "make a campfire", zh: "生篝火", grammar: "make + 名词", topic: "outdoor",
+    example: "Dad made a campfire to keep us warm." },
+  { en: "go hiking", zh: "去徒步", grammar: "go + V-ing", topic: "outdoor",
+    example: "Let's go hiking in the mountains this weekend!" },
+  { en: "go birdwatching", zh: "去观鸟", grammar: "go + V-ing", topic: "outdoor",
+    example: "She goes birdwatching every Sunday morning." },
+  { en: "collect leaves", zh: "收集树叶", grammar: "collect + 复数名词", topic: "outdoor",
+    example: "The children collected colorful leaves in autumn." },
+  { en: "collect stones", zh: "收集石头", grammar: "collect + 复数名词", topic: "outdoor",
+    example: "Tom loves collecting stones by the river." },
+  { en: "watch the sunset", zh: "看日落", grammar: "watch + 名词", topic: "outdoor",
+    example: "We watched the sunset from the hilltop." },
+
+  // Mountain Life & Winter Sports
+  { en: "living in mountains", zh: "住在山里", grammar: "v-ing + in + 地点", topic: "mountain",
+    example: "Living in mountains is peaceful and quiet." },
+  { en: "go skiing with family", zh: "和家人去滑雪", grammar: "go + V-ing + with sb.", topic: "mountain",
+    example: "We go skiing with family every winter." },
+  { en: "enjoy mountain views", zh: "欣赏山景", grammar: "enjoy + 名词", topic: "mountain",
+    example: "You can enjoy mountain views from the hotel." },
+  { en: "build a snowman", zh: "堆雪人", grammar: "build + a/an + 名词", topic: "mountain",
+    example: "The kids built a snowman in the garden." },
+  { en: "have a snowball fight", zh: "打雪仗", grammar: "have + a + 名词", topic: "mountain",
+    example: "They had a snowball fight after the heavy snow." },
+  { en: "take a cable car", zh: "坐缆车", grammar: "take + a/an + 交通工具", topic: "mountain",
+    example: "We took a cable car to the top of the mountain." },
+  { en: "breathe fresh air", zh: "呼吸新鲜空气", grammar: "动词 + 形容词 + 名词", topic: "mountain",
+    example: "It's nice to breathe fresh air in the forest." },
+
+  // Travel & City Exploration
+  { en: "taste local food", zh: "品尝当地美食", grammar: "taste + 形容词 + 名词", topic: "travel",
+    example: "You should taste local food when you travel." },
+  { en: "visit museums", zh: "参观博物馆", grammar: "visit + 复数名词", topic: "travel",
+    example: "We visited three museums in Beijing." },
+  { en: "take photos", zh: "拍照", grammar: "take + 复数名词", topic: "travel",
+    example: "She loves taking photos of old buildings." },
+  { en: "buy souvenirs", zh: "买纪念品", grammar: "buy + 复数名词", topic: "travel",
+    example: "I bought some souvenirs for my friends." },
+  { en: "learn about local culture", zh: "了解当地文化", grammar: "learn about + 名词", topic: "travel",
+    example: "Traveling helps you learn about local culture." },
+  { en: "explore the city", zh: "探索城市", grammar: "explore + 名词", topic: "travel",
+    example: "Let's explore the city on foot." },
+  { en: "try street food", zh: "尝试街头小吃", grammar: "try + 名词", topic: "travel",
+    example: "Don't forget to try street food in Xi'an." },
+
+  // Beach & Water Sports
+  { en: "go swimming", zh: "去游泳", grammar: "go + V-ing", topic: "beach",
+    example: "We go swimming in the sea every summer." },
+  { en: "sunbathe", zh: "晒太阳", grammar: "不及物动词（无go）", topic: "beach",
+    example: "She sunbathed on the beach all afternoon." },
+  { en: "collect shells", zh: "收集贝壳", grammar: "collect + 复数名词", topic: "beach",
+    example: "The little girl collected shells along the shore." },
+  { en: "build sandcastles", zh: "堆沙堡", grammar: "build + 复数名词", topic: "beach",
+    example: "Children love building sandcastles on the beach." },
+  { en: "go sailing", zh: "去帆船", grammar: "go + V-ing", topic: "beach",
+    example: "They went sailing on a sunny day." },
+  { en: "go windsurfing", zh: "去风帆冲浪", grammar: "go + V-ing", topic: "beach",
+    example: "Going windsurfing is exciting but difficult." },
+  { en: "play in the waves", zh: "在海浪中玩耍", grammar: "play in + 名词", topic: "beach",
+    example: "The kids played in the waves for hours." },
+
+  // Adjectives
+  { en: "interesting", zh: "有趣的（褒）", grammar: "be + adj", topic: "adjectives",
+    example: "The museum was very interesting." },
+  { en: "useful", zh: "有用的（褒）", grammar: "be + adj", topic: "adjectives",
+    example: "This travel guide is really useful." },
+  { en: "enjoyable", zh: "令人愉快的（褒）", grammar: "be + adj", topic: "adjectives",
+    example: "We had an enjoyable trip to the mountains." },
+  { en: "meaningful", zh: "有意义的（褒）", grammar: "be + adj", topic: "adjectives",
+    example: "Collecting leaves is a meaningful activity." },
+  { en: "dull", zh: "枯燥的（贬）", grammar: "be + adj", topic: "adjectives",
+    example: "The film was dull and I almost fell asleep." },
+  { en: "tiring", zh: "累人的（贬）", grammar: "be + adj", topic: "adjectives",
+    example: "Climbing the mountain was tiring but fun." },
+  { en: "challenging", zh: "有挑战性的（中性偏褒）", grammar: "be + adj", topic: "adjectives",
+    example: "Windsurfing is challenging but worth trying." },
+
+  // Opinion Expressions
+  { en: "I think", zh: "我认为（基础）", grammar: "I think + 句子", topic: "opinion",
+    example: "I think go hiking is the best outdoor activity." },
+  { en: "For me", zh: "对我来说（口语）", grammar: "For me, + 句子", topic: "opinion",
+    example: "For me, camping is more enjoyable than staying in a hotel." },
+  { en: "In my opinion", zh: "在我看来（书面）", grammar: "In my opinion, + 句子", topic: "opinion",
+    example: "In my opinion, learning about local culture is important." },
+  { en: "If I have a choice, I will", zh: "如果让我选，我会（高级）", grammar: "If I have a choice, I will + 动词", topic: "opinion",
+    example: "If I have a choice, I will go skiing with my family." },
+];
+
+// ===== STATE =====
+let state = {
+  mode: 'flashcard',
+  topic: 'all',
+  currentQuestions: [],
+  currentIdx: 0,
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  wrongList: [],
+  totalStars: 0,
+  answeredFlags: {},
+};
+
+// Load stars from localStorage
+try {
+  state.totalStars = parseInt(localStorage.getItem('outAndAboutStars') || '0');
+} catch(e) { state.totalStars = 0; }
+
+function updateStarsDisplay() {
+  document.getElementById('starsDisplay').textContent = `⭐ ${state.totalStars} / 100`;
+}
+
+// ===== HELPERS =====
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getFilteredData() {
+  if (state.topic === 'all') return [...ALL_DATA];
+  return ALL_DATA.filter(d => d.topic === state.topic);
+}
+
+function getTopicLabel(topic) {
+  const map = { outdoor: '露营徒步', mountain: '山居滑雪', travel: '旅行城市', beach: '海滩水上', adjectives: '评价形容词', opinion: '观点表达' };
+  return map[topic] || topic;
+}
+
+// ===== MODE: FLASHCARD =====
+function renderFlashcard() {
+  const data = state.currentQuestions[state.currentIdx];
+  const area = document.getElementById('exerciseArea');
+  const total = state.currentQuestions.length;
+  const progress = ((state.currentIdx) / total) * 100;
+
+  area.innerHTML = `
+    <div class="ex-header">
+      <span class="ex-title">📇 翻卡记忆 — ${getTopicLabel(data.topic)}</span>
+      <span class="ex-counter">${state.currentIdx + 1} / ${total}</span>
+    </div>
+    <div class="ex-progress"><div class="ex-progress-fill" style="width:${progress}%"></div></div>
+    <div class="flashcard-container">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="flashcard-face flashcard-front">
+          <div class="flashcard-en">${data.en}</div>
+          <div class="flashcard-grammar">${data.grammar}</div>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="flashcard-zh">${data.zh}</div>
+          <div class="flashcard-example">${data.example}</div>
+        </div>
+      </div>
+      <div class="flashcard-hint">👆 点击卡片翻转</div>
+    </div>
+    <div class="flashcard-controls">
+      <button class="fc-btn fc-btn-unknown" onclick="markCard(false)">😕 不认识</button>
+      <button class="fc-btn fc-btn-know" onclick="markCard(true)">😎 认识</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--c-text-light);">
+      认识 +1⭐ · 不认识 +0⭐ · 错题稍后复习
+    </div>
+  `;
+}
+
+function flipCard() {
+  const card = document.getElementById('flashcard');
+  if (card) card.classList.toggle('flipped');
+}
+
+function markCard(known) {
+  const data = state.currentQuestions[state.currentIdx];
+  if (known) {
+    state.score++;
+    state.correct++;
+    state.totalStars++;
+  } else {
+    state.wrong++;
+    state.wrongList.push({ ...data, userAnswer: '不认识' });
+  }
+  saveStars();
+  nextQuestion();
+}
+
+// ===== MODE: MATCHING =====
+function renderMatching() {
+  // Generate a set of 6 pairs
+  const data = getFilteredData();
+  const pairs = shuffle(data).slice(0, 6);
+  const enItems = shuffle(pairs);
+  const zhItems = shuffle(pairs);
+  state.matchState = { pairs, selectedEn: null, selectedZh: null, matched: 0, total: pairs.length };
+  state.matchIdx = {}; // track which items are matched by index
+
+  const area = document.getElementById('exerciseArea');
+  area.innerHTML = `
+    <div class="ex-header">
+      <span class="ex-title">🔗 连线匹配 — 点击左右配对</span>
+      <span class="ex-counter">已配对: 0 / ${pairs.length}</span>
+    </div>
+    <div class="ex-progress"><div class="ex-progress-fill" style="width:0%"></div></div>
+    <div class="match-grid" id="matchGrid">
+      <div class="match-col" id="enCol">
+        ${enItems.map((d, i) => `<div class="match-item" data-side="en" data-idx="${i}" data-en="${d.en}" onclick="selectMatch('en', ${i}, '${d.en}')">${d.en}</div>`).join('')}
+      </div>
+      <div class="match-col" id="zhCol">
+        ${zhItems.map((d, i) => `<div class="match-item" data-side="zh" data-idx="${i}" data-zh="${d.zh}" onclick="selectMatch('zh', ${i}, '${d.zh}')">${d.zh}</div>`).join('')}
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--c-text-light);">
+      👆 先点左边英文，再点右边中文，配对正确变绿
+    </div>
+  `;
+}
+
+function selectMatch(side, idx, value) {
+  const items = document.querySelectorAll('.match-item');
+  // Clear previous wrong states
+  items.forEach(it => { if (!it.classList.contains('matched')) it.classList.remove('wrong', 'selected'); });
+
+  const el = document.querySelector(`.match-item[data-side="${side}"][data-idx="${idx}"]`);
+  if (!el || el.classList.contains('matched')) return;
+  el.classList.add('selected');
+
+  if (side === 'en') {
+    state.matchState.selectedEn = { idx, value, el };
+  } else {
+    state.matchState.selectedZh = { idx, value, el };
+  }
+
+  // Check if both selected
+  if (state.matchState.selectedEn && state.matchState.selectedZh) {
+    checkMatch();
+  }
+}
+
+function checkMatch() {
+  const { selectedEn, selectedZh } = state.matchState;
+  const enData = state.matchState.pairs.find(p => p.en === selectedEn.value);
+  const isCorrect = enData && enData.zh === selectedZh.value;
+
+  if (isCorrect) {
+    selectedEn.el.classList.remove('selected');
+    selectedZh.el.classList.remove('selected');
+    selectedEn.el.classList.add('matched');
+    selectedZh.el.classList.add('matched');
+    state.matchState.matched++;
+    state.score++;
+    state.correct++;
+    state.totalStars++;
+    saveStars();
+
+    // Update counter
+    document.querySelector('.ex-counter').textContent = `已配对: ${state.matchState.matched} / ${state.matchState.total}`;
+    const pct = (state.matchState.matched / state.matchState.total) * 100;
+    document.querySelector('.ex-progress-fill').style.width = pct + '%';
+
+    if (state.matchState.matched === state.matchState.total) {
+      setTimeout(() => showResults(), 600);
+    }
+  } else {
+    selectedEn.el.classList.add('wrong');
+    selectedZh.el.classList.add('wrong');
+    state.wrong++;
+    const enData = state.matchState.pairs.find(p => p.en === selectedEn.value);
+    state.wrongList.push({ en: selectedEn.value, zh: enData ? enData.zh : '?', userAnswer: selectedZh.value });
+    setTimeout(() => {
+      selectedEn.el.classList.remove('wrong', 'selected');
+      selectedZh.el.classList.remove('wrong', 'selected');
+    }, 600);
+  }
+
+  state.matchState.selectedEn = null;
+  state.matchState.selectedZh = null;
+}
+
+// ===== MODE: FILL BLANK =====
+function renderFillBlank() {
+  const data = state.currentQuestions[state.currentIdx];
+  const total = state.currentQuestions.length;
+  const progress = (state.currentIdx / total) * 100;
+
+  // Create a fill-in-the-blank from the example
+  const words = data.example.split(' ');
+  // Pick a key word to blank out (preferably the main phrase word)
+  const phraseWords = data.en.split(' ');
+  let blankIdx = -1;
+  for (let pw of phraseWords) {
+    pw = pw.toLowerCase().replace(/[^a-z]/g, '');
+    const idx = words.findIndex(w => w.toLowerCase().replace(/[^a-z]/g, '') === pw && w.length > 2);
+    if (idx >= 0) { blankIdx = idx; break; }
+  }
+  if (blankIdx < 0) {
+    // Find any word > 3 chars
+    blankIdx = words.findIndex(w => w.replace(/[^a-zA-Z]/g, '').length > 3);
+  }
+  if (blankIdx < 0) blankIdx = 0;
+
+  const answer = words[blankIdx].replace(/[^a-zA-Z]/g, '');
+  const displaySentence = words.map((w, i) => {
+    if (i === blankIdx) return `<input class="fill-input" id="fillInput" autocomplete="off" placeholder="?" data-answer="${answer}" />`;
+    return w;
+  }).join(' ');
+
+  const area = document.getElementById('exerciseArea');
+  area.innerHTML = `
+    <div class="ex-header">
+      <span class="ex-title">✏️ 填空题 — ${getTopicLabel(data.topic)}</span>
+      <span class="ex-counter">${state.currentIdx + 1} / ${total}</span>
+    </div>
+    <div class="ex-progress"><div class="ex-progress-fill" style="width:${progress}%"></div></div>
+    <div class="fill-hint">💡 根据句意填入缺失的词（注意时态变化）</div>
+    <div class="fill-blank-q">${displaySentence}</div>
+    <div class="fill-feedback" id="fillFeedback"></div>
+    <div class="action-bar">
+      <button class="action-btn btn-primary" onclick="checkFill()">提交答案</button>
+    </div>
+  `;
+  document.getElementById('fillInput').focus();
+  document.getElementById('fillInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkFill();
+  });
+}
+
+function checkFill() {
+  const input = document.getElementById('fillInput');
+  if (!input) return;
+  const userAns = input.value.trim().toLowerCase();
+  const correctAns = input.dataset.answer.toLowerCase();
+  const feedback = document.getElementById('fillFeedback');
+
+  if (input.classList.contains('correct') || input.classList.contains('wrong')) return;
+
+  if (userAns === correctAns) {
+    input.classList.add('correct');
+    feedback.className = 'fill-feedback show ok';
+    feedback.innerHTML = `✅ 正确！ "${correctAns}" — ${state.currentQuestions[state.currentIdx].zh}`;
+    state.score++;
+    state.correct++;
+    state.totalStars++;
+  } else {
+    input.classList.add('wrong');
+    feedback.className = 'fill-feedback show no';
+    feedback.innerHTML = `❌ 正确答案: <b>${correctAns}</b> — ${state.currentQuestions[state.currentIdx].zh}`;
+    state.wrong++;
+    state.wrongList.push({ ...state.currentQuestions[state.currentIdx], userAnswer: userAns });
+  }
+  saveStars();
+  setTimeout(() => nextQuestion(), 2000);
+}
+
+// ===== MODE: MULTIPLE CHOICE =====
+function renderChoice() {
+  const data = state.currentQuestions[state.currentIdx];
+  const total = state.currentQuestions.length;
+  const progress = (state.currentIdx / total) * 100;
+
+  // Generate 4 options: correct zh + 3 wrong
+  const allZh = ALL_DATA.filter(d => d.topic === data.topic && d.zh !== data.zh).map(d => d.zh);
+  const wrongOptions = shuffle(allZh).slice(0, 3);
+  const options = shuffle([data.zh, ...wrongOptions]);
+
+  const area = document.getElementById('exerciseArea');
+  area.innerHTML = `
+    <div class="ex-header">
+      <span class="ex-title">📝 选择题 — ${getTopicLabel(data.topic)}</span>
+      <span class="ex-counter">${state.currentIdx + 1} / ${total}</span>
+    </div>
+    <div class="ex-progress"><div class="ex-progress-fill" style="width:${progress}%"></div></div>
+    <div class="fill-hint">💡 选择 "${data.en}" 的正确中文意思</div>
+    <div class="mc-question">"${data.en}" 是什么意思？</div>
+    <div class="mc-options" id="mcOptions">
+      ${options.map((opt, i) => `
+        <div class="mc-option" onclick="checkChoice(this, '${opt.replace(/'/g, "\\'")}', '${data.zh.replace(/'/g, "\\'")}')">
+          <span class="letter">${String.fromCharCode(65 + i)}</span>
+          <span>${opt}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="feedback-box" id="choiceFeedback"></div>
+  `;
+}
+
+function checkChoice(el, selected, correct) {
+  const options = document.querySelectorAll('.mc-option');
+  options.forEach(o => o.classList.add('disabled'));
+  const feedback = document.getElementById('choiceFeedback');
+
+  if (selected === correct) {
+    el.classList.add('correct');
+    feedback.className = 'feedback-box show ok';
+    feedback.innerHTML = `<h4>✅ 正确！</h4><p>${state.currentQuestions[state.currentIdx].en} = ${correct}</p>`;
+    state.score++;
+    state.correct++;
+    state.totalStars++;
+  } else {
+    el.classList.add('wrong');
+    // Highlight correct one
+    options.forEach(o => {
+      if (o.querySelector('span:last-child').textContent === correct) {
+        o.classList.add('correct');
+      }
+    });
+    feedback.className = 'feedback-box show no';
+    feedback.innerHTML = `<h4>❌ 答错了</h4><p>正确答案: <b>${correct}</b></p>`;
+    state.wrong++;
+    state.wrongList.push({ ...state.currentQuestions[state.currentIdx], userAnswer: selected });
+  }
+  saveStars();
+  setTimeout(() => nextQuestion(), 1800);
+}
+
+// ===== MODE: SENTENCE ORDERING =====
+function renderOrdering() {
+  const data = state.currentQuestions[state.currentIdx];
+  const total = state.currentQuestions.length;
+  const progress = (state.currentIdx / total) * 100;
+
+  // Use the example sentence, split into word chunks
+  const sentence = data.example.replace(/\.$/, '');
+  const words = sentence.split(' ');
+  // For longer sentences, split into meaningful chunks
+  let chunks;
+  if (words.length <= 6) {
+    chunks = words.map(w => w.replace(/[^a-zA-Z]/g, ''));
+  } else {
+    // Split into 5-6 chunks
+    const chunkSize = Math.ceil(words.length / 5);
+    chunks = [];
+    for (let i = 0; i < words.length; i += chunkSize) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '));
+    }
+  }
+  chunks = chunks.filter(c => c.length > 0);
+  const shuffled = shuffle(chunks);
+  const correctOrder = chunks.join(' ');
+
+  state.orderingState = { correctOrder, placed: [] };
+
+  const area = document.getElementById('exerciseArea');
+  area.innerHTML = `
+    <div class="ex-header">
+      <span class="ex-title">🔢 句子排序 — ${getTopicLabel(data.topic)}</span>
+      <span class="ex-counter">${state.currentIdx + 1} / ${total}</span>
+    </div>
+    <div class="ex-progress"><div class="ex-progress-fill" style="width:${progress}%"></div></div>
+    <div class="fill-hint">💡 按正确顺序点击单词，组成完整句子</div>
+    <div class="so-target" id="soTarget">
+      <span class="placeholder">点击下方单词排列顺序…</span>
+    </div>
+    <div class="so-bank" id="soBank">
+      ${shuffled.map((w, i) => `<span class="so-word" data-word="${w}" data-idx="${i}" onclick="placeWord(${i})">${w}</span>`).join('')}
+    </div>
+    <div class="feedback-box" id="orderFeedback"></div>
+    <div class="action-bar">
+      <button class="action-btn btn-secondary" onclick="resetOrdering()">重置</button>
+      <button class="action-btn btn-primary" onclick="checkOrdering()">提交</button>
+    </div>
+  `;
+}
+
+function placeWord(idx) {
+  const word = document.querySelector(`.so-word[data-idx="${idx}"]`);
+  if (!word || word.classList.contains('used')) return;
+  word.classList.add('used');
+  state.orderingState.placed.push({ word: word.dataset.word, idx });
+
+  const target = document.getElementById('soTarget');
+  const placeholder = target.querySelector('.placeholder');
+  if (placeholder) placeholder.remove();
+
+  const placed = document.createElement('span');
+  placed.className = 'so-word so-placed';
+  placed.textContent = word.dataset.word;
+  placed.onclick = () => unplaceWord(idx, placed);
+  target.appendChild(placed);
+}
+
+function unplaceWord(idx, el) {
+  el.remove();
+  const word = document.querySelector(`.so-word[data-idx="${idx}"]`);
+  if (word) word.classList.remove('used');
+  state.orderingState.placed = state.orderingState.placed.filter(p => p.idx !== idx);
+  const target = document.getElementById('soTarget');
+  if (state.orderingState.placed.length === 0) {
+    target.innerHTML = '<span class="placeholder">点击下方单词排列顺序…</span>';
+  }
+}
+
+function resetOrdering() {
+  document.querySelectorAll('.so-word').forEach(w => w.classList.remove('used'));
+  state.orderingState.placed = [];
+  document.getElementById('soTarget').innerHTML = '<span class="placeholder">点击下方单词排列顺序…</span>';
+  document.getElementById('orderFeedback').className = 'feedback-box';
+}
+
+function checkOrdering() {
+  const userOrder = state.orderingState.placed.map(p => p.word).join(' ');
+  const feedback = document.getElementById('orderFeedback');
+
+  if (userOrder === state.orderingState.correctOrder) {
+    feedback.className = 'feedback-box show ok';
+    feedback.innerHTML = `<h4>✅ 完美！</h4><p>${state.orderingState.correctOrder}.</p>`;
+    state.score++;
+    state.correct++;
+    state.totalStars++;
+  } else {
+    feedback.className = 'feedback-box show no';
+    feedback.innerHTML = `<h4>❌ 顺序不对</h4><p>正确: <b>${state.orderingState.correctOrder}.</b></p>`;
+    state.wrong++;
+    state.wrongList.push({ ...state.currentQuestions[state.currentIdx], userAnswer: userOrder });
+  }
+  saveStars();
+  setTimeout(() => nextQuestion(), 2500);
+}
+
+// ===== NAVIGATION =====
+function nextQuestion() {
+  state.currentIdx++;
+  if (state.currentIdx >= state.currentQuestions.length) {
+    showResults();
+  } else {
+    renderCurrentMode();
+  }
+}
+
+function renderCurrentMode() {
+  switch (state.mode) {
+    case 'flashcard': renderFlashcard(); break;
+    case 'matching': renderMatching(); break;
+    case 'fillblank': renderFillBlank(); break;
+    case 'choice': renderChoice(); break;
+    case 'ordering': renderOrdering(); break;
+  }
+}
+
+// ===== RESULTS =====
+function showResults() {
+  const total = state.currentQuestions.length || state.matchState?.total || 0;
+  const pct = total > 0 ? Math.round((state.correct / (state.correct + state.wrong)) * 100) : 0;
+  let msg, emoji;
+  if (pct >= 90) { msg = '太棒了！你完全掌握了这些内容！'; emoji = '🏆'; }
+  else if (pct >= 70) { msg = '做得不错！再练几次就完美了！'; emoji = '🎉'; }
+  else if (pct >= 50) { msg = '还可以！建议复习错题后再来一次。'; emoji = '💪'; }
+  else { msg = '别灰心！翻回去看看卡片再来挑战吧。'; emoji = '📚'; }
+
+  const area = document.getElementById('exerciseArea');
+  let wrongHtml = '';
+  if (state.wrongList.length > 0) {
+    wrongHtml = `
+      <div class="wrong-list">
+        <h4>📋 错题回顾（${state.wrongList.length}题）</h4>
+        ${state.wrongList.map(w => `
+          <div class="wrong-item">
+            <b>${w.en}</b> → ${w.zh}
+            ${w.userAnswer ? `<br>你的答案: <span style="color:var(--c-red)">${w.userAnswer}</span> <span class="answer">正确: ${w.zh}</span>` : ''}
+            ${w.example ? `<br><i>${w.example}</i>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  area.innerHTML = `
+    <div class="results-screen">
+      <div style="font-size:48px;">${emoji}</div>
+      <div class="results-score">${pct}<span class="total">分</span></div>
+      <div class="results-msg">${msg}</div>
+      <div class="results-detail">
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-green)">${state.correct}</div>
+          <div class="label">答对</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-red)">${state.wrong}</div>
+          <div class="label">答错</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-orange)">+${state.score}</div>
+          <div class="label">本轮⭐</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-purple)">${state.totalStars}</div>
+          <div class="label">总⭐</div>
+        </div>
+      </div>
+      ${wrongHtml}
+      <div class="action-bar" style="margin-top:24px;">
+        <button class="action-btn btn-secondary" onclick="restartSameMode()">🔄 再练一次</button>
+        <button class="action-btn btn-primary" onclick="goHome()">🏠 返回首页</button>
+      </div>
+    </div>
+  `;
+}
+
+function restartSameMode() {
+  startExercise();
+}
+
+function goHome() {
+  document.getElementById('mainContent').scrollIntoView({ behavior: 'smooth' });
+  startExercise();
+}
+
+// ===== STARS =====
+function saveStars() {
+  try {
+    localStorage.setItem('outAndAboutStars', state.totalStars.toString());
+  } catch(e) {}
+  updateStarsDisplay();
+}
+
+// ===== START =====
+function startExercise() {
+  state.currentIdx = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.wrongList = [];
+
+  const data = getFilteredData();
+
+  if (state.mode === 'matching') {
+    renderMatching();
+    return;
+  }
+
+  // For other modes, pick 10 questions (or all if fewer)
+  const count = Math.min(10, data.length);
+  state.currentQuestions = shuffle(data).slice(0, count);
+  renderCurrentMode();
+}
+
+// ===== EVENT LISTENERS =====
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    startExercise();
+  });
+});
+
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.topic = chip.dataset.topic;
+    startExercise();
+  });
+});
+
+// ===== INIT =====
+updateStarsDisplay();
+startExercise();
+</script>
+</body>
+</html>
