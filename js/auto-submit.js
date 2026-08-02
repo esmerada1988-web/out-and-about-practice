@@ -87,14 +87,19 @@
       }
     };
 
-    // 动态更新按钮文字（用 setInterval 避免 MutationObserver 无限循环导致卡顿）
-    setInterval(function () {
-      document.querySelectorAll('button[onclick*="generateScoreCode"]').forEach(function (btn) {
-        if (!btn.disabled && btn.textContent.indexOf('提交中') < 0 && btn.textContent.indexOf('提交成绩给老师') < 0) {
-          btn.textContent = '📤 提交成绩给老师';
-        }
-      });
-    }, 2000);
+    // 覆盖 showResults，在结果页显示后更新按钮文字（零轮询，不卡页面）
+    var originalShowResults = window.showResults;
+    if (originalShowResults) {
+      window.showResults = function () {
+        originalShowResults.apply(null, arguments);
+        setTimeout(function () {
+          var btn = document.querySelector('button[onclick*="generateScoreCode"]');
+          if (btn && !btn.disabled && btn.textContent.indexOf('提交中') < 0) {
+            btn.textContent = '📤 提交成绩给老师';
+          }
+        }, 50);
+      };
+    }
   }
 
   if (document.readyState === 'loading') {
