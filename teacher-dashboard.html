@@ -163,13 +163,26 @@
 <body>
 
 <div class="header">
-  <h1>📊 Out & About 教师成绩后台</h1>
-  <p>粘贴学生发来的成绩码，自动生成成绩表</p>
+  <h1>📊 教师成绩后台</h1>
+  <p>学生做完练习自动提交成绩，这里一键查看全部</p>
+</div>
+
+<!-- Online Auto-Fetch Panel -->
+<div class="panel" style="border:2px solid var(--c-green);border-radius:16px;">
+  <h2>🟢 在线成绩（自动提交）</h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+    <input type="password" id="teacherKey" placeholder="输入教师密钥" style="flex:1;min-width:200px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
+    <button class="btn btn-primary" onclick="fetchOnline()">🔄 刷新数据</button>
+    <button class="btn btn-secondary" onclick="clearOnline()">清空在线数据</button>
+  </div>
+  <div class="input-hint" id="onlineStatus" style="color:var(--c-text-light);">
+    💡 学生做完练习后会自动提交成绩，点「刷新数据」即可查看。密钥在 Vercel 环境变量 TEACHER_KEY 中设置。
+  </div>
 </div>
 
 <!-- Input Panel -->
 <div class="panel">
-  <h2>📥 录入成绩码</h2>
+  <h2>📥 手动录入成绩码（备用）</h2>
   <textarea class="input-area" id="codeInput" placeholder="将学生微信发来的成绩码粘贴在这里（每行一个，支持批量粘贴）&#10;&#10;例如：&#10;EP-eyJuIjoi5bCP5piOIiwibSI6...&#10;EP-eyJuIjoi5byg5LiHIiwibSI6..."></textarea>
   <div class="input-hint">
     💡 支持批量录入：多个成绩码可以一行一个粘贴，也可以直接粘贴包含成绩码的整段微信消息
@@ -218,7 +231,7 @@
   <div class="empty-state">
     <div class="icon">📋</div>
     <p>还没有成绩数据</p>
-    <p style="font-size:13px;margin-top:8px;">将学生发来的成绩码粘贴到上方输入框，点击「解析成绩」即可</p>
+    <p style="font-size:13px;margin-top:8px;">输入教师密钥，点「刷新数据」查看学生自动提交的成绩<br>或使用下方手动录入成绩码</p>
   </div>
 </div>
 
@@ -226,8 +239,99 @@
 
 <script>
 let records = [];
+let onlineRecords = [];
 let sortKey = 'tm';
 let sortDir = -1; // -1 = desc, 1 = asc
+
+// ===== ONLINE AUTO-FETCH =====
+function fetchOnline() {
+  const key = document.getElementById('teacherKey').value.trim();
+  if (!key) {
+    showToast('请先输入教师密钥');
+    document.getElementById('teacherKey').focus();
+    return;
+  }
+
+  // Save key for convenience
+  try { localStorage.setItem('teacherKey', key); } catch(e) {}
+
+  const statusEl = document.getElementById('onlineStatus');
+  statusEl.innerHTML = '⏳ 正在获取数据...';
+
+  fetch('/api/scores?key=' + encodeURIComponent(key))
+    .then(r => {
+      if (r.status === 401) throw new Error('密钥错误');
+      if (!r.ok) throw new Error('获取失败');
+      return r.json();
+    })
+    .then(data => {
+      onlineRecords = (data.scores || []).map(s => ({
+        n: s.name || '未知',
+        m: s.mode || '—',
+        t: s.source || '—',
+        s: s.pct || 0,
+        c: s.correct || 0,
+        w: s.wrong || 0,
+        d: 0,
+        tm: formatTime(s.time),
+        online: true
+      }));
+      statusEl.innerHTML = '✅ 已获取 <b>' + onlineRecords.length + '</b> 条在线成绩（' + new Date().toLocaleTimeString('zh-CN') + '）';
+      renderTable();
+      showToast('已获取 ' + onlineRecords.length + ' 条在线成绩');
+    })
+    .catch(err => {
+      if (err.message === '密钥错误') {
+        statusEl.innerHTML = '❌ 密钥错误，请检查后重试';
+      } else if (err.message.includes('Failed to fetch')) {
+        statusEl.innerHTML = '⚠️ 无法连接服务器（可能未部署到 Vercel，或网络问题）。可使用下方手动录入。';
+      } else {
+        statusEl.innerHTML = '⚠️ ' + err.message;
+      }
+    });
+}
+
+function clearOnline() {
+  const key = document.getElementById('teacherKey').value.trim();
+  if (!key) {
+    showToast('请先输入教师密钥');
+    return;
+  }
+  if (!confirm('确定清空服务器上所有在线成绩吗？此操作不可撤销。')) return;
+
+  fetch('/api/clear?key=' + encodeURIComponent(key), { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        onlineRecords = [];
+        renderTable();
+        showToast('在线数据已清空');
+        document.getElementById('onlineStatus').innerHTML = '✅ 在线数据已清空';
+      } else {
+        showToast('清空失败');
+      }
+    })
+    .catch(() => {
+      showToast('无法连接服务器');
+    });
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    const pad = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } catch(e) { return iso; }
+}
+
+// Load saved teacher key
+try {
+  const savedKey = localStorage.getItem('teacherKey');
+  if (savedKey) {
+    document.getElementById('teacherKey').value = savedKey;
+  }
+} catch(e) {}
 
 // Load saved records from localStorage
 function loadSaved() {
@@ -309,15 +413,15 @@ function parseCodes() {
 }
 
 function clearAll() {
-  if (records.length === 0) {
+  if (records.length === 0 && onlineRecords.length === 0) {
     showToast('没有数据可清空');
     return;
   }
-  if (confirm(`确定清空全部 ${records.length} 条记录吗？此操作不可撤销。`)) {
+  if (confirm(`确定清空本地 ${records.length} 条手动记录吗？（在线记录不受影响）`)) {
     records = [];
     saveRecords();
     renderTable();
-    showToast('已清空全部记录');
+    showToast('已清空本地记录');
   }
 }
 
@@ -326,7 +430,10 @@ function renderTable() {
   const tablePanel = document.getElementById('tablePanel');
   const statsPanel = document.getElementById('statsPanel');
 
-  if (records.length === 0) {
+  // Merge online + manual records
+  const allRecords = [...onlineRecords, ...records];
+
+  if (allRecords.length === 0) {
     empty.classList.remove('hidden');
     tablePanel.classList.add('hidden');
     statsPanel.classList.add('hidden');
@@ -338,10 +445,12 @@ function renderTable() {
   statsPanel.classList.remove('hidden');
 
   // Update count
-  document.getElementById('recordCount').textContent = `（共 ${records.length} 条）`;
+  const onlineCount = onlineRecords.length;
+  const manualCount = records.length;
+  document.getElementById('recordCount').textContent = `（在线 ${onlineCount} + 手动 ${manualCount} = ${allRecords.length} 条）`;
 
   // Sort records
-  const sorted = [...records].sort((a, b) => {
+  const sorted = [...allRecords].sort((a, b) => {
     let va = a[sortKey], vb = b[sortKey];
     if (typeof va === 'string') {
       va = va.toLowerCase();
@@ -356,9 +465,10 @@ function renderTable() {
   tbody.innerHTML = sorted.map((r, i) => {
     const scoreClass = r.s >= 80 ? 'score-high' : r.s >= 50 ? 'score-mid' : 'score-low';
     const duration = formatDuration(r.d);
+    const onlineTag = r.online ? ' <span style="font-size:10px;background:#e8f5e9;color:#2e7d32;padding:1px 6px;border-radius:8px;">自动</span>' : '';
     return `
       <tr>
-        <td><b>${escapeHtml(r.n)}</b></td>
+        <td><b>${escapeHtml(r.n)}</b>${onlineTag}</td>
         <td>${escapeHtml(r.m)}</td>
         <td>${escapeHtml(r.t)}</td>
         <td><span class="score-badge ${scoreClass}">${r.s}分</span></td>
@@ -388,16 +498,17 @@ function renderTable() {
 }
 
 function renderStats() {
-  const total = records.length;
-  const avgScore = total > 0 ? Math.round(records.reduce((s, r) => s + r.s, 0) / total) : 0;
-  const highScore = total > 0 ? Math.max(...records.map(r => r.s)) : 0;
-  const lowScore = total > 0 ? Math.min(...records.map(r => r.s)) : 0;
-  const totalCorrect = records.reduce((s, r) => s + r.c, 0);
-  const totalWrong = records.reduce((s, r) => s + r.w, 0);
-  const passRate = total > 0 ? Math.round(records.filter(r => r.s >= 60).length / total * 100) : 0;
+  const allRecords = [...onlineRecords, ...records];
+  const total = allRecords.length;
+  const avgScore = total > 0 ? Math.round(allRecords.reduce((s, r) => s + r.s, 0) / total) : 0;
+  const highScore = total > 0 ? Math.max(...allRecords.map(r => r.s)) : 0;
+  const lowScore = total > 0 ? Math.min(...allRecords.map(r => r.s)) : 0;
+  const totalCorrect = allRecords.reduce((s, r) => s + r.c, 0);
+  const totalWrong = allRecords.reduce((s, r) => s + r.w, 0);
+  const passRate = total > 0 ? Math.round(allRecords.filter(r => r.s >= 60).length / total * 100) : 0;
 
   // Unique students
-  const uniqueNames = [...new Set(records.map(r => r.n))];
+  const uniqueNames = [...new Set(allRecords.map(r => r.n))];
 
   document.getElementById('statsRow').innerHTML = `
     <div class="stat-card">
@@ -452,13 +563,14 @@ function escapeHtml(str) {
 }
 
 function exportCSV() {
-  if (records.length === 0) {
+  const allRecords = [...onlineRecords, ...records];
+  if (allRecords.length === 0) {
     showToast('没有数据可导出');
     return;
   }
 
-  const headers = ['姓名', '练习模式', '主题', '分数', '答对', '答错', '用时(秒)', '提交时间'];
-  const rows = records.map(r => [r.n, r.m, r.t, r.s, r.c, r.w, r.d, r.tm]);
+  const headers = ['姓名', '练习模式', '主题/来源', '分数', '答对', '答错', '用时(秒)', '提交时间'];
+  const rows = allRecords.map(r => [r.n, r.m, r.t, r.s, r.c, r.w, r.d, r.tm]);
 
   // Add BOM for Excel UTF-8 compatibility
   let csv = '\uFEFF' + headers.join(',') + '\n';
@@ -480,12 +592,13 @@ function exportCSV() {
 }
 
 function exportJSON() {
-  if (records.length === 0) {
+  const allRecords = [...onlineRecords, ...records];
+  if (allRecords.length === 0) {
     showToast('没有数据可导出');
     return;
   }
 
-  const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(allRecords, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -507,9 +620,19 @@ try {
   const saved = localStorage.getItem('teacherRecords');
   if (saved) {
     records = JSON.parse(saved);
-    if (records.length > 0) renderTable();
   }
 } catch(e) {}
+
+// Auto-fetch online scores if teacher key is saved
+try {
+  const savedKey = localStorage.getItem('teacherKey');
+  if (savedKey) {
+    setTimeout(fetchOnline, 500);
+  }
+} catch(e) {}
+
+// Render table (will show manual records if any, or empty state)
+renderTable();
 
 // Allow Enter key in textarea to submit (Ctrl+Enter)
 document.getElementById('codeInput').addEventListener('keydown', e => {
