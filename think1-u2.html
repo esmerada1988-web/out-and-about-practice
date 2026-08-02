@@ -575,7 +575,7 @@ function renderFillBlank(q) {
   const words=shuffle([q.answer,...getDistractors(q.answer)]);
   html+='<div class="word-bank">';
   words.forEach(w=>{ html+=`<span class="word-chip" onclick="fillWord('${w.replace(/'/g,"\\'")}', this)">${w}</span>`; });
-  html+='</div><div style="text-align:center;margin-top:16px;"><button class="action-btn btn-primary" onclick="checkFillBlank('${q.answer.replace(/'/g,"\\'")}')">✅ 确认</button></div>';
+  html+=`</div><div style="text-align:center;margin-top:16px;"><button class="action-btn btn-primary" onclick="checkFillBlank('${q.answer.replace(/'/g,"\\'")}')">✅ 确认</button></div>`;
   return html;
 }
 function getDistractors(answer) {
