@@ -33,7 +33,10 @@ export default async function handler(req, res) {
       if (action === 'add') {
         if (!list.some(n => n.toLowerCase() === studentName.toLowerCase())) {
           list.push(studentName);
-          await redis.set(WLIST_KEY, JSON.stringify(list));
+          const setResult = await redis.set(WLIST_KEY, JSON.stringify(list));
+          // Debug: read back immediately
+          const readback = await redis.get(WLIST_KEY);
+          return res.json({ ok: true, students: list, debug: { setResult: setResult, readback: readback, key: WLIST_KEY } });
         }
         return res.json({ ok: true, students: list });
       }
