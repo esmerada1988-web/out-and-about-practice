@@ -167,19 +167,20 @@
   <p>学生做完练习自动提交成绩，这里一键查看全部</p>
 </div>
 
-<!-- Access Code Management Panel -->
+<!-- Student Roster Management Panel -->
 <div class="panel" style="border:2px solid var(--c-orange);border-radius:16px;">
-  <h2>🔑 访问密码管理</h2>
+  <h2>📋 学生名单管理</h2>
   <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-    <input type="password" id="acTeacherKey" placeholder="教师密钥" style="flex:1;min-width:150px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
-    <button class="btn btn-secondary" onclick="getAccessCode()">🔍 查看当前密码</button>
+    <input type="password" id="acTeacherKey" placeholder="教师密钥" style="flex:1;min-width:120px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
+    <button class="btn btn-secondary" onclick="loadRoster()">🔄 加载名单</button>
   </div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-    <input type="text" id="newAccessCode" placeholder="设置新密码（如 abc123）" style="flex:1;min-width:150px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" />
-    <button class="btn btn-primary" onclick="setAccessCode()">🔑 设置/修改密码</button>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+    <input type="text" id="newStudentName" placeholder="输入学生名字" style="flex:1;min-width:120px;padding:10px 16px;border:2px solid var(--c-border);border-radius:24px;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')addStudent()" />
+    <button class="btn btn-primary" onclick="addStudent()">➕ 添加学生</button>
   </div>
+  <div id="rosterList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;min-height:10px;"></div>
   <div class="input-hint" id="acStatus" style="color:var(--c-text-light);">
-    💡 设置密码后，学生打开练习页面需要输入此密码才能进入。修改密码后旧密码立即失效。
+    💡 添加学生名字后，学生打开练习页输入自己的名字即可进入。移除某个学生只影响该学生，其他人不受影响。
   </div>
 </div>
 
@@ -361,51 +362,91 @@ try {
   }
 })();
 
-// ===== ACCESS CODE MANAGEMENT =====
-function getAccessCode() {
+// ===== STUDENT ROSTER MANAGEMENT =====
+function loadRoster() {
   var key = document.getElementById('acTeacherKey').value.trim();
   if (!key) { showToast('请输入教师密钥'); return; }
   try { localStorage.setItem('teacherKey', key); } catch(e) {}
   var statusEl = document.getElementById('acStatus');
-  statusEl.innerHTML = '⏳ 查询中...';
-  fetch('/api/auth?key=' + encodeURIComponent(key) + '&getcode=1')
+  statusEl.innerHTML = '⏳ 加载中...';
+  fetch('/api/auth?getlist=1&key=' + encodeURIComponent(key))
     .then(function(r) {
       if (r.status === 401) throw new Error('密钥错误');
       return r.json();
     })
     .then(function(data) {
-      if (data.accessCode) {
-        document.getElementById('newAccessCode').value = data.accessCode;
-        statusEl.innerHTML = '✅ 当前密码：<b>' + data.accessCode + '</b>（学生用此密码进入练习页）';
-      } else {
-        statusEl.innerHTML = '⚠️ 尚未设置密码，学生暂时无法进入练习页。请在下方设置一个密码。';
-      }
+      var students = data.students || [];
+      renderRoster(students);
+      statusEl.innerHTML = students.length > 0
+        ? '✅ 名单共 <b>' + students.length + '</b> 名学生。学生打开练习页输入名字即可进入。'
+        : '⚠️ 名单为空，学生暂时无法进入练习页。请在上方添加学生名字。';
     })
     .catch(function(err) {
       statusEl.innerHTML = '❌ ' + err.message;
     });
 }
 
-function setAccessCode() {
+function renderRoster(students) {
+  var container = document.getElementById('rosterList');
+  if (!container) return;
+  if (!students || students.length === 0) {
+    container.innerHTML = '<span style="color:#999;font-size:13px;">暂无学生，请在上方添加</span>';
+    return;
+  }
+  container.innerHTML = students.map(function(name) {
+    var safeName = name.replace(/'/g, "\\'");
+    return '<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#E6F1FB;border:1px solid #85B7EB;border-radius:20px;font-size:13px;color:#0C447C;">'
+      + name
+      + '<button onclick="removeStudent(\'' + safeName + '\')" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;padding:0;line-height:1;">×</button>'
+      + '</span>';
+  }).join('');
+}
+
+function addStudent() {
   var key = document.getElementById('acTeacherKey').value.trim();
-  var code = document.getElementById('newAccessCode').value.trim();
+  var name = document.getElementById('newStudentName').value.trim();
   if (!key) { showToast('请输入教师密钥'); return; }
-  if (!code) { showToast('请输入新密码'); return; }
+  if (!name) { showToast('请输入学生名字'); return; }
   try { localStorage.setItem('teacherKey', key); } catch(e) {}
   var statusEl = document.getElementById('acStatus');
-  statusEl.innerHTML = '⏳ 设置中...';
+  statusEl.innerHTML = '⏳ 添加中...';
   fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ teacherKey: key, accessCode: code })
+    body: JSON.stringify({ teacherKey: key, action: 'add', name: name })
   })
     .then(function(r) {
       if (r.status === 401) throw new Error('密钥错误');
       return r.json();
     })
     .then(function(data) {
-      statusEl.innerHTML = '✅ 密码已设置为：<b>' + data.accessCode + '</b>，学生可使用此密码进入练习页';
-      showToast('密码设置成功！');
+      document.getElementById('newStudentName').value = '';
+      renderRoster(data.students || []);
+      statusEl.innerHTML = '✅ 已添加 <b>' + name + '</b>。当前共 ' + (data.students || []).length + ' 名学生。';
+      showToast('添加成功！');
+    })
+    .catch(function(err) {
+      statusEl.innerHTML = '❌ ' + err.message;
+    });
+}
+
+function removeStudent(name) {
+  var key = document.getElementById('acTeacherKey').value.trim();
+  if (!key) { showToast('请输入教师密钥'); return; }
+  var statusEl = document.getElementById('acStatus');
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacherKey: key, action: 'remove', name: name })
+  })
+    .then(function(r) {
+      if (r.status === 401) throw new Error('密钥错误');
+      return r.json();
+    })
+    .then(function(data) {
+      renderRoster(data.students || []);
+      statusEl.innerHTML = '✅ 已移除 <b>' + name + '</b>。当前共 ' + (data.students || []).length + ' 名学生。';
+      showToast('已移除 ' + name);
     })
     .catch(function(err) {
       statusEl.innerHTML = '❌ ' + err.message;
@@ -707,6 +748,7 @@ try {
   const savedKey = localStorage.getItem('teacherKey');
   if (savedKey) {
     setTimeout(fetchOnline, 500);
+    setTimeout(loadRoster, 600);
   }
 } catch(e) {}
 
