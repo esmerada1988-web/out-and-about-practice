@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THINK 1 - Unit 1 Having a Good Time | 交互式词汇练习</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --c-primary: #6C5CE7;
+    --c-primary-light: #a29bfe;
+    --c-primary-dark: #5849c4;
+    --c-green: #00b894;
+    --c-red: #e74c3c;
+    --c-orange: #fdcb6e;
+    --c-orange-dark: #f39c12;
+    --c-blue: #0984e3;
+    --c-pink: #fd79a8;
+    --c-purple: #6c5ce7;
+    --c-bg: #f5f3ff;
+    --c-card: #ffffff;
+    --c-text: #2d3436;
+    --c-text-light: #636e72;
+    --c-border: #dfe6e9;
+    --radius: 16px;
+    --shadow: 0 4px 20px rgba(108,92,231,0.1);
+    --shadow-hover: 0 8px 30px rgba(108,92,231,0.2);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    color: var(--c-text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .header {
+    text-align: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+    border-radius: var(--radius);
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .header h1 { font-size: 22px; margin-bottom: 6px; }
+  .header .subtitle { font-size: 14px; opacity: 0.85; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .section-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .filter-chip {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 2px solid var(--c-border);
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-chip.active {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: white;
+  }
+  .filter-chip:hover:not(.active) { border-color: var(--c-primary-light); }
+  .mode-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 0;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mode-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--c-border);
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .mode-btn.active {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108,92,231,0.3);
+  }
+  .mode-btn:hover:not(.active) { border-color: var(--c-primary-light); }
+  .stars-display {
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .stars-display .star { color: var(--c-orange-dark); }
+  .practice-area {
+    background: var(--c-card);
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    box-shadow: var(--shadow);
+    min-height: 400px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--c-border);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c-primary), var(--c-primary-light));
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .question-num {
+    text-align: center;
+    font-size: 13px;
+    color: var(--c-text-light);
+    margin-bottom: 12px;
+  }
+  /* Flashcard */
+  .flashcard-container {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .flashcard {
+    width: 100%;
+    height: 220px;
+    position: relative;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+    margin: 0 auto;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+  }
+  .flashcard-front {
+    background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+    color: white;
+  }
+  .flashcard-back {
+    background: linear-gradient(135deg, var(--c-green) 0%, #00a381 100%);
+    color: white;
+    transform: rotateY(180deg);
+  }
+  .flashcard-word { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .flashcard-type { font-size: 12px; opacity: 0.7; }
+  .flashcard-meaning { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .flashcard-example { font-size: 13px; opacity: 0.85; line-height: 1.5; margin-top: 8px; }
+  .flashcard-section { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+  .flashcard-hint { text-align: center; font-size: 12px; color: var(--c-text-light); margin-top: 12px; }
+  .flashcard-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  .flashcard-btn {
+    padding: 10px 24px;
+    border-radius: 24px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-know { background: var(--c-green); color: white; }
+  .btn-dont { background: var(--c-red); color: white; }
+  .flashcard-btn:hover { transform: scale(1.05); }
+  /* Matching */
+  .matching-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .match-item {
+    padding: 14px 10px;
+    border-radius: 12px;
+    border: 2px solid var(--c-border);
+    background: white;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .match-item:hover { border-color: var(--c-primary-light); }
+  .match-item.selected {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: white;
+  }
+  .match-item.correct {
+    border-color: var(--c-green);
+    background: var(--c-green);
+    color: white;
+    pointer-events: none;
+  }
+  .match-item.wrong {
+    border-color: var(--c-red);
+    background: var(--c-red);
+    color: white;
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  /* Fill blank */
+  .fill-blank-question {
+    font-size: 18px;
+    line-height: 1.8;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .blank {
+    display: inline-block;
+    min-width: 80px;
+    padding: 4px 12px;
+    margin: 0 4px;
+    border-bottom: 3px solid var(--c-primary);
+    text-align: center;
+    font-weight: 700;
+    color: var(--c-primary);
+  }
+  .blank.filled { color: var(--c-text); }
+  .blank.correct { color: var(--c-green); border-color: var(--c-green); }
+  .blank.wrong { color: var(--c-red); border-color: var(--c-red); }
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .word-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--c-bg);
+    border: 2px solid var(--c-primary-light);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .word-chip:hover { background: var(--c-primary-light); color: white; }
+  .word-chip.used { opacity: 0.3; pointer-events: none; }
+  /* Multiple choice */
+  .mc-question {
+    font-size: 18px;
+    text-align: center;
+    margin: 16px 0 20px;
+    font-weight: 600;
+  }
+  .mc-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .mc-option {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 2px solid var(--c-border);
+    background: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .mc-option:hover { border-color: var(--c-primary-light); }
+  .mc-option.correct {
+    border-color: var(--c-green);
+    background: rgba(0,184,148,0.1);
+    color: var(--c-green);
+  }
+  .mc-option.wrong {
+    border-color: var(--c-red);
+    background: rgba(231,76,60,0.1);
+    color: var(--c-red);
+  }
+  .mc-option.disabled { pointer-events: none; }
+  /* Sentence ordering */
+  .so-target {
+    min-height: 50px;
+    border: 2px dashed var(--c-primary-light);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+  }
+  .so-word {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: var(--c-primary);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .so-word:hover { opacity: 0.8; }
+  .so-word.in-target { background: var(--c-green); }
+  .so-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  .so-translation {
+    text-align: center;
+    font-size: 15px;
+    color: var(--c-text-light);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  /* Results */
+  .results-screen {
+    text-align: center;
+    padding: 20px;
+  }
+  .results-score {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--c-primary);
+  }
+  .results-score .total { font-size: 20px; color: var(--c-text-light); }
+  .results-msg { font-size: 18px; margin: 8px 0 16px; font-weight: 600; }
+  .results-detail {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .results-stat { text-align: center; }
+  .results-stat .num { font-size: 24px; font-weight: 700; }
+  .results-stat .label { font-size: 12px; color: var(--c-text-light); }
+  .wrong-list {
+    text-align: left;
+    margin-top: 16px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wrong-list h3 { font-size: 15px; margin-bottom: 8px; color: var(--c-red); }
+  .wrong-item {
+    background: rgba(231,76,60,0.08);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .wrong-item .correct-answer { color: var(--c-green); font-weight: 600; }
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    padding: 12px 28px;
+    border-radius: 24px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--c-primary); color: white; }
+  .btn-secondary { background: white; color: var(--c-primary); border: 2px solid var(--c-primary); }
+  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  /* Score submission */
+  .submit-section {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 24px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .submit-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--c-primary-dark);
+  }
+  .submit-section input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid var(--c-primary-light);
+    font-size: 15px;
+    margin-bottom: 10px;
+    outline: none;
+  }
+  .submit-section input:focus { border-color: var(--c-primary); }
+  .code-output {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 12px;
+    word-break: break-all;
+    margin-top: 10px;
+    display: none;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .copy-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: var(--c-green);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,184,148,0.3); }
+  .copy-btn:active { transform: scale(0.98); }
+  .grammar-tip {
+    background: rgba(108,92,231,0.08);
+    border-left: 4px solid var(--c-primary);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--c-text-light);
+    line-height: 1.6;
+  }
+  .grammar-tip strong { color: var(--c-primary-dark); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>THINK 1 · Unit 1 Having a Good Time</h1>
+  <div class="subtitle">交互式词汇练习 · 5种模式 · 即时反馈</div>
+  <div class="badge">📚 80+ 词汇短语 · 按教材章节分类</div>
+</div>
+
+<div class="stars-display">
+  <span class="star">⭐</span> <span id="starCount">0</span> 颗星
+</div>
+
+<div class="section-filters">
+  <div class="filter-chip active" data-topic="all">全部</div>
+  <div class="filter-chip" data-topic="p12">P12 形容词&频率</div>
+  <div class="filter-chip" data-topic="p13">P13 活动与健康</div>
+  <div class="filter-chip" data-topic="p14">P14-15 兴趣爱好</div>
+  <div class="filter-chip" data-topic="p16">P16-17 爱好与频率</div>
+  <div class="filter-chip" data-topic="p18">P18-19 日常生活</div>
+  <div class="filter-chip" data-topic="grammar">语法要点</div>
+</div>
+
+<div class="mode-bar">
+  <button class="mode-btn active" data-mode="flashcard">📇 翻卡记忆</button>
+  <button class="mode-btn" data-mode="matching">🔗 连线匹配</button>
+  <button class="mode-btn" data-mode="fillblank">✏️ 填空题</button>
+  <button class="mode-btn" data-mode="multiplechoice">📝 选择题</button>
+  <button class="mode-btn" data-mode="ordering">🔢 句子排序</button>
+</div>
+
+<div class="practice-area" id="practiceArea">
+  <div id="contentArea"></div>
+</div>
+
+<script>
+// ===== VOCAB DATA =====
+const vocabData = [
+  // P12 Reading - Adjectives & Frequency
+  {en:"fun", zh:"趣事", type:"n.", section:"p12", example:"We had a lot of fun at the party.", topic:"P12 形容词&频率"},
+  {en:"interesting", zh:"有趣的（指物）", type:"adj.", section:"p12", example:"The book is very interesting.", topic:"P12 形容词&频率"},
+  {en:"interested", zh:"感兴趣的（指人）", type:"adj.", section:"p12", example:"I am interested in music.", topic:"P12 形容词&频率"},
+  {en:"boring", zh:"无聊的", type:"adj.", section:"p12", example:"The film was boring.", topic:"P12 形容词&频率"},
+  {en:"easy", zh:"容易的", type:"adj.", section:"p12", example:"This question is easy.", topic:"P12 形容词&频率"},
+  {en:"difficult", zh:"困难的", type:"adj.", section:"p12", example:"Math is difficult for me.", topic:"P12 形容词&频率"},
+  {en:"difficulty", zh:"困难", type:"n.", section:"p12", example:"I have difficulty with spelling.", topic:"P12 形容词&频率"},
+  {en:"always", zh:"总是", type:"adv.", section:"p12", example:"I always get up at six.", topic:"P12 形容词&频率"},
+  {en:"often", zh:"经常", type:"adv.", section:"p12", example:"She often reads books.", topic:"P12 形容词&频率"},
+  {en:"sometimes", zh:"有时候", type:"adv.", section:"p12", example:"Sometimes I go swimming.", topic:"P12 形容词&频率"},
+  {en:"never", zh:"从不", type:"adv.", section:"p12", example:"I never eat fast food.", topic:"P12 形容词&频率"},
+  {en:"do exercise", zh:"做锻炼", type:"phrase", section:"p12", example:"You should do exercise every day.", topic:"P12 形容词&频率"},
+  {en:"message on your phone", zh:"在手机上发消息", type:"phrase", section:"p12", example:"Don't message on your phone in class.", topic:"P12 形容词&频率"},
+
+  // P13 Reading - Activities & Health
+  {en:"look after", zh:"照顾", type:"phrase", section:"p13", example:"She looks after her little brother.", topic:"P13 活动与健康"},
+  {en:"ourselves", zh:"我们自己", type:"pron.", section:"p13", example:"We enjoyed ourselves at the party.", topic:"P13 活动与健康"},
+  {en:"play an instrument", zh:"弹奏乐器", type:"phrase", section:"p13", example:"Can you play an instrument?", topic:"P13 活动与健康"},
+  {en:"take photos", zh:"拍照", type:"phrase", section:"p13", example:"I like to take photos of flowers.", topic:"P13 活动与健康"},
+  {en:"keep us healthy", zh:"使我们保持健康", type:"phrase", section:"p13", example:"Sports keep us healthy.", topic:"P13 活动与健康"},
+  {en:"quiz", zh:"小测验", type:"n.", section:"p13", example:"We have a math quiz today.", topic:"P13 活动与健康"},
+  {en:"laugh a lot", zh:"经常笑", type:"phrase", section:"p13", example:"The children laugh a lot.", topic:"P13 活动与健康"},
+  {en:"all the time", zh:"一直", type:"phrase", section:"p13", example:"He is busy all the time.", topic:"P13 活动与健康"},
+  {en:"number puzzle", zh:"数字谜题", type:"n.", section:"p13", example:"I love solving number puzzles.", topic:"P13 活动与健康"},
+  {en:"activity", zh:"活动", type:"n.", section:"p13", example:"Swimming is my favourite activity.", topic:"P13 活动与健康"},
+  {en:"less than 8 hours", zh:"少于8小时", type:"phrase", section:"p13", example:"I sleep less than 8 hours a night.", topic:"P13 活动与健康"},
+  {en:"be positive", zh:"积极乐观的", type:"phrase", section:"p13", example:"Try to be positive about life.", topic:"P13 活动与健康"},
+  {en:"hobby", zh:"业余爱好", type:"n.", section:"p13", example:"My hobby is reading.", topic:"P13 活动与健康"},
+  {en:"interest", zh:"兴趣", type:"n.", section:"p13", example:"She has an interest in art.", topic:"P13 活动与健康"},
+
+  // P14-15 Grammar & Listening - Hobbies
+  {en:"horror movies", zh:"恐怖电影", type:"n.", section:"p14", example:"I love watching horror movies.", topic:"P14-15 兴趣爱好"},
+  {en:"write a blog", zh:"写博客", type:"phrase", section:"p14", example:"She writes a blog about food.", topic:"P14-15 兴趣爱好"},
+  {en:"keep a pet", zh:"养宠物", type:"phrase", section:"p14", example:"I want to keep a pet dog.", topic:"P14-15 兴趣爱好"},
+  {en:"collect things", zh:"收集物品", type:"phrase", section:"p14", example:"He likes to collect things.", topic:"P14-15 兴趣爱好"},
+  {en:"brain", zh:"大脑", type:"n.", section:"p14", example:"Your brain needs rest too.", topic:"P14-15 兴趣爱好"},
+  {en:"crossword", zh:"纵横字谜", type:"n.", section:"p14", example:"I do a crossword every morning.", topic:"P14-15 兴趣爱好"},
+  {en:"play online games", zh:"玩在线游戏", type:"phrase", section:"p14", example:"They play online games together.", topic:"P14-15 兴趣爱好"},
+  {en:"have a good time", zh:"玩得愉快", type:"phrase", section:"p14", example:"We had a good time at the beach.", topic:"P14-15 兴趣爱好"},
+  {en:"have a rest", zh:"休息一下", type:"phrase", section:"p14", example:"Let's have a rest.", topic:"P14-15 兴趣爱好"},
+  {en:"play for a while", zh:"弹奏一会儿", type:"phrase", section:"p14", example:"She played for a while then stopped.", topic:"P14-15 兴趣爱好"},
+  {en:"discover your talent", zh:"发掘你的才华", type:"phrase", section:"p14", example:"Art helps you discover your talent.", topic:"P14-15 兴趣爱好"},
+  {en:"anything else", zh:"任何其他的事", type:"phrase", section:"p14", example:"Do you want anything else?", topic:"P14-15 兴趣爱好"},
+
+  // P16-17 Reading & Grammar
+  {en:"take photos of them", zh:"给他们拍照", type:"phrase", section:"p16", example:"I take photos of them every day.", topic:"P16-17 爱好与频率"},
+  {en:"wait for the bus", zh:"等公交车", type:"phrase", section:"p16", example:"We wait for the bus here.", topic:"P16-17 爱好与频率"},
+  {en:"wait in the queue", zh:"排队等待", type:"phrase", section:"p16", example:"Please wait in the queue.", topic:"P16-17 爱好与频率"},
+  {en:"Sudoku", zh:"数独", type:"n.", section:"p16", example:"Sudoku is a popular puzzle game.", topic:"P16-17 爱好与频率"},
+  {en:"occasionally", zh:"偶尔", type:"adv.", section:"p16", example:"I occasionally go to the cinema.", topic:"P16-17 爱好与频率"},
+  {en:"especially", zh:"尤其", type:"adv.", section:"p16", example:"I love sports, especially tennis.", topic:"P16-17 爱好与频率"},
+  {en:"once a week", zh:"一周一次", type:"phrase", section:"p16", example:"I go swimming once a week.", topic:"P16-17 爱好与频率"},
+  {en:"hate running", zh:"讨厌跑步", type:"phrase", section:"p16", example:"I hate running in the rain.", topic:"P16-17 爱好与频率"},
+  {en:"rugby", zh:"橄榄球", type:"n.", section:"p16", example:"Rugby is popular in England.", topic:"P16-17 爱好与频率"},
+  {en:"talk on the internet", zh:"在网上交谈", type:"phrase", section:"p16", example:"We talk on the internet every night.", topic:"P16-17 爱好与频率"},
+  {en:"be crazy about sth.", zh:"对某事狂热", type:"phrase", section:"p16", example:"She is crazy about music.", topic:"P16-17 爱好与频率"},
+  {en:"twice a week", zh:"一周两次", type:"phrase", section:"p16", example:"I have piano lessons twice a week.", topic:"P16-17 爱好与频率"},
+  {en:"three times a week", zh:"一周三次", type:"phrase", section:"p16", example:"He goes to the gym three times a week.", topic:"P16-17 爱好与频率"},
+  {en:"rarely", zh:"很少，不常", type:"adv.", section:"p16", example:"I rarely watch TV.", topic:"P16-17 爱好与频率"},
+  {en:"catch the bus to school", zh:"坐公交车去学校", type:"phrase", section:"p16", example:"I catch the bus to school at 7.", topic:"P16-17 爱好与频率"},
+
+  // P18-19 Speaking & Life Competencies
+  {en:"enjoy making model aeroplanes", zh:"享受制作模型飞机", type:"phrase", section:"p18", example:"He enjoys making model aeroplanes.", topic:"P18-19 日常生活"},
+  {en:"upstairs", zh:"楼上", type:"adj./adv.", section:"p18", example:"My bedroom is upstairs.", topic:"P18-19 日常生活"},
+  {en:"downstairs", zh:"楼下", type:"adj./adv.", section:"p18", example:"The kitchen is downstairs.", topic:"P18-19 日常生活"},
+  {en:"hurry up", zh:"快点", type:"phrase", section:"p18", example:"Hurry up! We're late!", topic:"P18-19 日常生活"},
+  {en:"broken", zh:"坏的，破损的", type:"adj.", section:"p18", example:"My phone is broken.", topic:"P18-19 日常生活"},
+  {en:"accident", zh:"意外", type:"n.", section:"p18", example:"There was a car accident yesterday.", topic:"P18-19 日常生活"},
+  {en:"fix", zh:"修理", type:"v.", section:"p18", example:"Can you fix my bike?", topic:"P18-19 日常生活"},
+  {en:"asleep", zh:"睡着的", type:"adj.", section:"p18", example:"The baby is asleep.", topic:"P18-19 日常生活"},
+  {en:"detention", zh:"课后留校", type:"n.", section:"p18", example:"He got detention for being late.", topic:"P18-19 日常生活"},
+  {en:"have empathy", zh:"有同情心", type:"phrase", section:"p18", example:"We should have empathy for others.", topic:"P18-19 日常生活"},
+  {en:"Vlogger", zh:"视频博主", type:"n.", section:"p18", example:"She is a famous Vlogger.", topic:"P18-19 日常生活"},
+  {en:"mostly", zh:"多半，主要地", type:"adv.", section:"p18", example:"I mostly eat at home.", topic:"P18-19 日常生活"},
+  {en:"pass the exam", zh:"通过考试", type:"phrase", section:"p18", example:"I hope I can pass the exam.", topic:"P18-19 日常生活"},
+  {en:"horrible", zh:"可怕的；糟糕的", type:"adj.", section:"p18", example:"The weather is horrible today.", topic:"P18-19 日常生活"},
+
+  // Grammar key points
+  {en:"love doing", zh:"热爱做某事", type:"grammar", section:"grammar", example:"I love swimming.", topic:"语法要点"},
+  {en:"hate doing", zh:"讨厌做某事", type:"grammar", section:"grammar", example:"I hate getting up early.", topic:"语法要点"},
+  {en:"like doing", zh:"喜欢做某事", type:"grammar", section:"grammar", example:"She likes reading novels.", topic:"语法要点"},
+  {en:"can't stand doing", zh:"无法忍受做某事", type:"grammar", section:"grammar", example:"I can't stand waiting.", topic:"语法要点"},
+  {en:"stop doing", zh:"停止做某事", type:"grammar", section:"grammar", example:"Stop talking, please!", topic:"语法要点"},
+  {en:"stop to do", zh:"停下来去做某事", type:"grammar", section:"grammar", example:"He stopped to rest.", topic:"语法要点"},
+  {en:"enjoy doing", zh:"享受做某事", type:"grammar", section:"grammar", example:"I enjoy playing chess.", topic:"语法要点"},
+  {en:"on holiday", zh:"在度假", type:"phrase", section:"grammar", example:"We are on holiday in Spain.", topic:"语法要点"},
+];
+
+// Sentence ordering data
+const sentenceData = [
+  {words:["Doing","homework","isn't","interesting"], zh:"做回家作业不有趣。", section:"p12"},
+  {words:["I","think","reading","is","sometimes","boring"], zh:"我认为阅读有时候无聊。", section:"p12"},
+  {words:["Singing","isn't","difficult"], zh:"唱歌不难。", section:"p12"},
+  {words:["I","don't","like","exercise","at","all"], zh:"我一点也不喜欢锻炼。", section:"p13"},
+  {words:["How","many","hours","do","you","sleep"], zh:"你一个晚上睡几个小时？", section:"p13"},
+  {words:["Life","is","sometimes","difficult"], zh:"生活有时候是困难的。", section:"p13"},
+  {words:["It's","great","to","be","busy"], zh:"忙碌点也好。", section:"p13"},
+  {words:["Why","don't","you","have","a","rest"], zh:"你为什么不休息一下呢？", section:"p14"},
+  {words:["I","can't","stand","having","nothing","to","do"], zh:"我不能忍受无事可做。", section:"p16"},
+  {words:["My","dream","is","to","go","to","New","York"], zh:"我的梦想是去纽约。", section:"p16"},
+  {words:["Mum","is","always","angry"], zh:"妈妈总是会生气。", section:"p16"},
+  {words:["She","is","crazy","about","music"], zh:"她对音乐很狂热。", section:"p16"},
+  {words:["I","rarely","watch","TV"], zh:"我很少看电视。", section:"p16"},
+  {words:["The","baby","is","asleep"], zh:"婴儿睡着了。", section:"p18"},
+  {words:["He","got","detention","for","being","late"], zh:"他因为迟到被留校。", section:"p18"},
+];
+
+// Fill blank data
+const fillBlankData = [
+  {sentence:"___ (run) is difficult for me.", answer:"Running", section:"p12", hint:"V-ing作主语"},
+  {sentence:"I am ___ in music. (interest)", answer:"interested", section:"p12", hint:"人用-ed"},
+  {sentence:"The book is very ___. (interest)", answer:"interesting", section:"p12", hint:"物用-ing"},
+  {sentence:"I ___ watch TV. (从不)", answer:"never", section:"p12", hint:"频率副词"},
+  {sentence:"Sports keep us ___. (health)", answer:"healthy", section:"p13", hint:"keep sb. + adj."},
+  {sentence:"I don't like exercise at ___.", answer:"all", section:"p13", hint:"not... at all"},
+  {sentence:"We need to think about ___. (we)", answer:"ourselves", section:"p13", hint:"反身代词"},
+  {sentence:"Why ___ you have a rest? (不)", answer:"don't", section:"p14", hint:"Why don't you...?"},
+  {sentence:"Stop ___ (talk)! It's time for class.", answer:"talking", section:"p14", hint:"stop doing"},
+  {sentence:"He stopped ___ (rest) and went on working.", answer:"to rest", section:"p14", hint:"stop to do"},
+  {sentence:"I ___ stand waiting. (无法忍受)", answer:"can't", section:"p16", hint:"can't stand doing"},
+  {sentence:"She is crazy ___ music.", answer:"about", section:"p16", hint:"be crazy about"},
+  {sentence:"I go swimming ___ a week. (一次)", answer:"once", section:"p16", hint:"频率表达"},
+  {sentence:"The baby fell ___. (sleep)", answer:"asleep", section:"p18", hint:"fall asleep"},
+  {sentence:"Can you ___ my bike? (修理)", answer:"fix", section:"p18", hint:"fix = repair"},
+];
+
+// Multiple choice data
+const mcData = [
+  {q:"'fun' 的词性是？", options:["名词 (n.)","形容词 (adj.)","动词 (v.)","副词 (adv.)"], answer:0, section:"p12"},
+  {q:"哪个词表示'有趣的'（指物）？", options:["interested","interesting","interest","interestedly"], answer:1, section:"p12"},
+  {q:"'I ___ get up at six.' 表示'总是'，填什么？", options:["never","sometimes","always","rarely"], answer:2, section:"p12"},
+  {q:"'keep us ___' 中填什么？", options:["health","healthy","healthily","unhealthy"], answer:1, section:"p13"},
+  {q:"'I don't like exercise at ___' 中填什么？", options:["all","least","most","first"], answer:0, section:"p13"},
+  {q:"'Why ___ you have a rest?' 等于 'Why not ___ a rest?' 第二空填？", options:["have","having","to have","had"], answer:0, section:"p14"},
+  {q:"'stop ___' 表示'停止做某事'，填什么？", options:["to do","doing","do","done"], answer:1, section:"p14"},
+  {q:"'stop ___' 表示'停下来去做某事'，填什么？", options:["to do","doing","do","done"], answer:0, section:"p14"},
+  {q:"'be crazy ___ sth.' 中填什么？", options:["about","in","at","for"], answer:0, section:"p16"},
+  {q:"'twice a week' 是什么意思？", options:["一周一次","一周两次","一周三次","每天"], answer:1, section:"p16"},
+  {q:"'rarely' 的意思是？", options:["总是","经常","很少","从不"], answer:2, section:"p16"},
+  {q:"'fall ___' 表示'睡着'，填什么？", options:["sleep","sleepy","asleep","sleeping"], answer:2, section:"p18"},
+  {q:"'fix' 的近义词是？", options:["break","repair","open","close"], answer:1, section:"p18"},
+  {q:"'detention' 的意思是？", options:["课后留校","课前预习","课间休息","课后辅导"], answer:0, section:"p18"},
+  {q:"'I love ___' 正确形式是？", options:["swim","to swimming","swimming","swam"], answer:2, section:"grammar"},
+];
+
+// ===== STATE =====
+let state = {
+  mode: 'flashcard',
+  topic: 'all',
+  currentQuestions: [],
+  currentIdx: 0,
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  wrongList: [],
+  totalStars: parseInt(localStorage.getItem('think1_u1_stars') || '0'),
+  answeredFlags: {},
+  modeLabel: '',
+  topicLabel: '全部',
+  startTime: 0,
+  matchSelected: null,
+  matchCorrect: 0,
+  fillAnswer: '',
+  soTarget: [],
+};
+
+// ===== HELPERS =====
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getFilteredVocab() {
+  if (state.topic === 'all') return vocabData;
+  return vocabData.filter(v => v.section === state.topic);
+}
+function getFilteredSentences() {
+  if (state.topic === 'all') return sentenceData;
+  return sentenceData.filter(s => s.section === state.topic);
+}
+function getFilteredFillBlanks() {
+  if (state.topic === 'all') return fillBlankData;
+  return fillBlankData.filter(f => f.section === state.topic);
+}
+function getFilteredMC() {
+  if (state.topic === 'all') return mcData;
+  return mcData.filter(m => m.section === state.topic);
+}
+function updateStars() {
+  document.getElementById('starCount').textContent = state.totalStars;
+  localStorage.setItem('think1_u1_stars', state.totalStars);
+}
+
+// ===== EXERCISE LOGIC =====
+function startExercise() {
+  state.currentIdx = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.wrongList = [];
+  state.startTime = Date.now();
+
+  if (state.mode === 'flashcard') {
+    state.currentQuestions = shuffle(getFilteredVocab());
+    state.modeLabel = '翻卡记忆';
+  } else if (state.mode === 'matching') {
+    const pool = shuffle(getFilteredVocab()).slice(0, 8);
+    state.currentQuestions = pool;
+    state.matchCorrect = 0;
+    state.matchSelected = null;
+    state.modeLabel = '连线匹配';
+  } else if (state.mode === 'fillblank') {
+    state.currentQuestions = shuffle(getFilteredFillBlanks());
+    state.modeLabel = '填空题';
+  } else if (state.mode === 'multiplechoice') {
+    state.currentQuestions = shuffle(getFilteredMC());
+    state.modeLabel = '选择题';
+  } else if (state.mode === 'ordering') {
+    state.currentQuestions = shuffle(getFilteredSentences());
+    state.modeLabel = '句子排序';
+  }
+
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const area = document.getElementById('contentArea');
+  if (state.currentIdx >= state.currentQuestions.length) {
+    showResults();
+    return;
+  }
+  const pct = Math.round((state.currentIdx / state.currentQuestions.length) * 100);
+  const q = state.currentQuestions[state.currentIdx];
+
+  let html = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="question-num">第 ${state.currentIdx + 1} / ${state.currentQuestions.length} 题</div>
+  `;
+
+  if (state.mode === 'flashcard') html += renderFlashcard(q);
+  else if (state.mode === 'matching') html += renderMatching();
+  else if (state.mode === 'fillblank') html += renderFillBlank(q);
+  else if (state.mode === 'multiplechoice') html += renderMC(q);
+  else if (state.mode === 'ordering') html += renderOrdering(q);
+
+  area.innerHTML = html;
+
+  if (state.mode === 'flashcard') attachFlashcardEvents(q);
+  else if (state.mode === 'matching') attachMatchingEvents();
+  else if (state.mode === 'fillblank') attachFillBlankEvents(q);
+  else if (state.mode === 'multiplechoice') attachMCEvents(q);
+  else if (state.mode === 'ordering') attachOrderingEvents(q);
+}
+
+// ===== FLASHCARD =====
+function renderFlashcard(q) {
+  return `
+    <div class="flashcard-container">
+      <div class="flashcard" id="fc" onclick="flipCard()">
+        <div class="flashcard-front">
+          <div class="flashcard-word">${q.en}</div>
+          <div class="flashcard-type">${q.type}</div>
+          <div class="flashcard-section">📖 ${q.topic}</div>
+        </div>
+        <div class="flashcard-back">
+          <div class="flashcard-meaning">${q.zh}</div>
+          <div class="flashcard-example">${q.example}</div>
+          <div class="flashcard-section">📖 ${q.topic}</div>
+        </div>
+      </div>
+    </div>
+    <div class="flashcard-hint">👆 点卡片翻转</div>
+    <div class="flashcard-actions">
+      <button class="flashcard-btn btn-dont" onclick="fcMarkWrong()">😕 不认识</button>
+      <button class="flashcard-btn btn-know" onclick="fcMarkRight()">😊 认识</button>
+    </div>
+  `;
+}
+function flipCard() {
+  document.getElementById('fc').classList.toggle('flipped');
+}
+function fcMarkRight() {
+  state.correct++;
+  state.score++;
+  state.totalStars++;
+  updateStars();
+  state.currentIdx++;
+  renderQuestion();
+}
+function fcMarkWrong() {
+  const q = state.currentQuestions[state.currentIdx];
+  state.wrong++;
+  state.wrongList.push({q: q.en, a: q.zh, mode: '翻卡'});
+  state.currentIdx++;
+  renderQuestion();
+}
+function attachFlashcardEvents() {}
+
+// ===== MATCHING =====
+function renderMatching() {
+  const items = state.currentQuestions;
+  const enItems = shuffle(items);
+  const zhItems = shuffle(items);
+  let html = '<div style="text-align:center;font-size:14px;color:var(--c-text-light);margin-bottom:12px;">左边点英文，右边点中文配对</div>';
+  html += '<div class="matching-grid">';
+  html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+  enItems.forEach((item, i) => {
+    html += `<div class="match-item" data-side="en" data-id="${i}" data-value="${item.en}">${item.en}</div>`;
+  });
+  html += '</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+  zhItems.forEach((item, i) => {
+    html += `<div class="match-item" data-side="zh" data-id="${i}" data-value="${item.en}">${item.zh}</div>`;
+  });
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+function attachMatchingEvents() {
+  document.querySelectorAll('.match-item').forEach(el => {
+    el.addEventListener('click', () => handleMatchClick(el));
+  });
+}
+function handleMatchClick(el) {
+  if (el.classList.contains('correct') || el.classList.contains('wrong')) return;
+  if (!state.matchSelected) {
+    state.matchSelected = el;
+    el.classList.add('selected');
+  } else {
+    if (state.matchSelected.dataset.side === el.dataset.side) {
+      state.matchSelected.classList.remove('selected');
+      state.matchSelected = el;
+      el.classList.add('selected');
+      return;
+    }
+    if (state.matchSelected.dataset.value === el.dataset.value) {
+      state.matchSelected.classList.remove('selected');
+      state.matchSelected.classList.add('correct');
+      el.classList.add('correct');
+      state.correct++;
+      state.score++;
+      state.matchCorrect++;
+      state.totalStars++;
+      updateStars();
+      if (state.matchCorrect >= state.currentQuestions.length) {
+        setTimeout(() => { state.currentIdx = state.currentQuestions.length; showResults(); }, 800);
+      }
+    } else {
+      const prev = state.matchSelected;
+      prev.classList.remove('selected');
+      prev.classList.add('wrong');
+      el.classList.add('wrong');
+      state.wrong++;
+      state.wrongList.push({q: prev.dataset.value, a: '配对错误', mode: '连线'});
+      setTimeout(() => { prev.classList.remove('wrong'); el.classList.remove('wrong'); }, 600);
+    }
+    state.matchSelected = null;
+  }
+}
+
+// ===== FILL BLANK =====
+function renderFillBlank(q) {
+  const parts = q.sentence.split('___');
+  let html = '<div class="fill-blank-question">';
+  parts.forEach((part, i) => {
+    html += part;
+    if (i < parts.length - 1) html += `<span class="blank" id="blank-${i}" onclick="clearBlank(${i})">______</span>`;
+  });
+  html += '</div>';
+  if (q.hint) html += `<div style="text-align:center;font-size:13px;color:var(--c-primary);margin-top:8px;">💡 ${q.hint}</div>`;
+  const words = shuffle([q.answer, ...getDistractors(q.answer, 'fill')]);
+  html += '<div class="word-bank">';
+  words.forEach(w => {
+    html += `<span class="word-chip" onclick="fillWord('${w}', this)">${w}</span>`;
+  });
+  html += '</div>';
+  html += `<div style="text-align:center;margin-top:16px;">
+    <button class="action-btn btn-primary" onclick="checkFillBlank('${q.answer}')">✅ 确认</button>
+  </div>`;
+  return html;
+}
+function getDistractors(answer, type) {
+  const all = vocabData.map(v => v.en).filter(w => w !== answer);
+  const distractors = shuffle(all).slice(0, 4);
+  return distractors;
+}
+let currentFillWord = '';
+function fillWord(word, el) {
+  document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('used'));
+  el.classList.add('used');
+  currentFillWord = word;
+  const blank = document.getElementById('blank-0');
+  if (blank) {
+    blank.textContent = word;
+    blank.classList.add('filled');
+  }
+}
+function clearBlank(idx) {
+  const blank = document.getElementById(`blank-${idx}`);
+  blank.textContent = '______';
+  blank.classList.remove('filled');
+  document.querySelectorAll('.word-chip').forEach(c => c.classList.remove('used'));
+  currentFillWord = '';
+}
+function checkFillBlank(answer) {
+  const blank = document.getElementById('blank-0');
+  if (!blank || !blank.classList.contains('filled')) {
+    alert('请先选择一个答案');
+    return;
+  }
+  const userAnswer = blank.textContent;
+  if (userAnswer.toLowerCase() === answer.toLowerCase()) {
+    blank.classList.add('correct');
+    state.correct++;
+    state.score++;
+    state.totalStars++;
+    updateStars();
+    setTimeout(() => { state.currentIdx++; renderQuestion(); }, 1000);
+  } else {
+    blank.classList.add('wrong');
+    state.wrong++;
+    state.wrongList.push({q: `填空: ${state.currentQuestions[state.currentIdx].sentence}`, a: answer, mode: '填空'});
+    setTimeout(() => {
+      blank.textContent = answer;
+      blank.classList.remove('wrong');
+      blank.classList.add('correct');
+      setTimeout(() => { state.currentIdx++; renderQuestion(); }, 1500);
+    }, 1200);
+  }
+}
+function attachFillBlankEvents() {}
+
+// ===== MULTIPLE CHOICE =====
+function renderMC(q) {
+  let html = `<div class="mc-question">${q.q}</div>`;
+  html += '<div class="mc-options">';
+  q.options.forEach((opt, i) => {
+    html += `<div class="mc-option" data-idx="${i}" onclick="checkMC(${i}, ${q.answer})">${String.fromCharCode(65+i)}. ${opt}</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+function checkMC(selected, correct) {
+  const options = document.querySelectorAll('.mc-option');
+  options.forEach(o => o.classList.add('disabled'));
+  if (selected === correct) {
+    options[selected].classList.add('correct');
+    state.correct++;
+    state.score++;
+    state.totalStars++;
+    updateStars();
+    setTimeout(() => { state.currentIdx++; renderQuestion(); }, 1200);
+  } else {
+    options[selected].classList.add('wrong');
+    options[correct].classList.add('correct');
+    state.wrong++;
+    state.wrongList.push({q: state.currentQuestions[state.currentIdx].q, a: q_options(correct), mode: '选择'});
+    setTimeout(() => { state.currentIdx++; renderQuestion(); }, 2000);
+  }
+}
+function q_options(idx) {
+  return String.fromCharCode(65 + idx);
+}
+function attachMCEvents() {}
+
+// ===== SENTENCE ORDERING =====
+function renderOrdering(q) {
+  state.soTarget = [];
+  const shuffled = shuffle(q.words);
+  let html = `<div class="so-translation">💬 ${q.zh}</div>`;
+  html += '<div class="so-target" id="soTarget"></div>';
+  html += '<div class="so-bank" id="soBank">';
+  shuffled.forEach((w, i) => {
+    html += `<span class="so-word" data-word="${w}" data-idx="${i}" onclick="moveToTarget(${i})">${w}</span>`;
+  });
+  html += '</div>';
+  html += `<div style="text-align:center;margin-top:16px;">
+    <button class="action-btn btn-primary" onclick="checkOrdering()">✅ 确认</button>
+    <button class="action-btn btn-secondary" onclick="resetOrdering()">🔄 重置</button>
+  </div>`;
+  return html;
+}
+function moveToTarget(bankIdx) {
+  const el = document.querySelector(`.so-word[data-idx="${bankIdx}"]`);
+  if (!el || el.classList.contains('in-target')) return;
+  const word = el.dataset.word;
+  state.soTarget.push(word);
+  el.classList.add('in-target');
+  el.style.visibility = 'hidden';
+  renderTarget();
+}
+function removeFromTarget(idx) {
+  const word = state.soTarget[idx];
+  state.soTarget.splice(idx, 1);
+  const els = document.querySelectorAll('.so-word');
+  els.forEach(el => {
+    if (el.dataset.word === word && el.classList.contains('in-target')) {
+      el.classList.remove('in-target');
+      el.style.visibility = 'visible';
+    }
+  });
+  renderTarget();
+}
+function renderTarget() {
+  const target = document.getElementById('soTarget');
+  if (state.soTarget.length === 0) {
+    target.innerHTML = '<span style="color:var(--c-text-light);font-size:13px;">点下方单词组句</span>';
+    return;
+  }
+  target.innerHTML = state.soTarget.map((w, i) =>
+    `<span class="so-word" style="background:var(--c-green);" onclick="removeFromTarget(${i})">${w}</span>`
+  ).join('');
+}
+function checkOrdering() {
+  const q = state.currentQuestions[state.currentIdx];
+  const userAnswer = state.soTarget.join(' ');
+  const correctAnswer = q.words.join(' ');
+  if (userAnswer === correctAnswer) {
+    state.correct++;
+    state.score++;
+    state.totalStars++;
+    updateStars();
+    document.getElementById('soTarget').style.borderColor = 'var(--c-green)';
+    setTimeout(() => { state.currentIdx++; renderQuestion(); }, 1200);
+  } else {
+    document.getElementById('soTarget').style.borderColor = 'var(--c-red)';
+    state.wrong++;
+    state.wrongList.push({q: `排序: ${q.zh}`, a: correctAnswer, mode: '排序'});
+    setTimeout(() => {
+      state.soTarget = [...q.words];
+      renderTarget();
+      document.getElementById('soTarget').style.borderColor = 'var(--c-green)';
+      setTimeout(() => { state.currentIdx++; renderQuestion(); }, 1500);
+    }, 1500);
+  }
+}
+function resetOrdering() {
+  state.soTarget = [];
+  document.querySelectorAll('.so-word').forEach(el => {
+    el.classList.remove('in-target');
+    el.style.visibility = 'visible';
+  });
+  renderTarget();
+}
+function attachOrderingEvents() {}
+
+// ===== RESULTS =====
+function showResults() {
+  const area = document.getElementById('contentArea');
+  const total = state.currentQuestions.length;
+  const pct = total > 0 ? Math.round((state.correct / total) * 100) : 0;
+  const emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : pct >= 40 ? '💪' : '📖';
+  const msg = pct >= 80 ? '太棒了！' : pct >= 60 ? '不错！继续加油！' : pct >= 40 ? '还需练习哦！' : '多看几遍词汇卡吧！';
+
+  let wrongHtml = '';
+  if (state.wrongList.length > 0) {
+    wrongHtml = '<div class="wrong-list"><h3>❌ 错题回顾</h3>';
+    state.wrongList.forEach(w => {
+      wrongHtml += `<div class="wrong-item">${w.q} → <span class="correct-answer">${w.a}</span></div>`;
+    });
+    wrongHtml += '</div>';
+  }
+
+  const seconds = Math.round((Date.now() - state.startTime) / 1000);
+  const timeStr = `${Math.floor(seconds/60)}分${seconds%60}秒`;
+
+  area.innerHTML = `
+    <div class="results-screen">
+      <div style="font-size:48px;">${emoji}</div>
+      <div class="results-score">${pct}<span class="total">分</span></div>
+      <div class="results-msg">${msg}</div>
+      <div class="results-detail">
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-green)">${state.correct}</div>
+          <div class="label">答对</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-red)">${state.wrong}</div>
+          <div class="label">答错</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-orange)">+${state.score}</div>
+          <div class="label">本轮⭐</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-purple)">${state.totalStars}</div>
+          <div class="label">总⭐</div>
+        </div>
+        <div class="results-stat">
+          <div class="num" style="color:var(--c-blue)">${timeStr}</div>
+          <div class="label">用时</div>
+        </div>
+      </div>
+      ${wrongHtml}
+      <div class="submit-section">
+        <h3>📤 提交成绩给老师</h3>
+        <input type="text" id="studentName" placeholder="输入你的姓名" />
+        <button class="copy-btn" onclick="generateScoreCode()">生成成绩码</button>
+        <div class="code-output" id="codeOutput"></div>
+        <button class="copy-btn" id="copyBtn" style="display:none;background:var(--c-blue);" onclick="copyScoreCode()">📋 复制成绩码</button>
+      </div>
+      <div class="action-bar">
+        <button class="action-btn btn-secondary" onclick="restartSameMode()">🔄 再练一次</button>
+        <button class="action-btn btn-primary" onclick="goHome()">🏠 返回首页</button>
+      </div>
+    </div>
+  `;
+}
+
+function generateScoreCode() {
+  const name = document.getElementById('studentName').value.trim();
+  if (!name) { alert('请输入姓名'); return; }
+  const seconds = Math.round((Date.now() - state.startTime) / 1000);
+  const data = {
+    n: name,
+    u: 'THINK1-U1',
+    m: state.modeLabel,
+    t: state.topicLabel,
+    s: state.score,
+    c: state.correct,
+    w: state.wrong,
+    total: state.currentQuestions.length,
+    time: seconds,
+    date: new Date().toISOString().slice(0, 10)
+  };
+  const code = 'EP-' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const output = document.getElementById('codeOutput');
+  output.textContent = code;
+  output.style.display = 'block';
+  document.getElementById('copyBtn').style.display = 'block';
+  output.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+function copyScoreCode() {
+  const code = document.getElementById('codeOutput').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ 已复制！发给你老师吧';
+      setTimeout(() => { btn.textContent = '📋 复制成绩码'; }, 2000);
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ 已复制！';
+    setTimeout(() => { btn.textContent = '📋 复制成绩码'; }, 2000);
+  }
+}
+
+function restartSameMode() { startExercise(); }
+function goHome() {
+  state.currentIdx = 0;
+  state.currentQuestions = [];
+  document.getElementById('contentArea').innerHTML = `
+    <div style="text-align:center;padding:40px 20px;color:var(--c-text-light);">
+      <div style="font-size:48px;">📚</div>
+      <p style="margin-top:12px;font-size:16px;">选择上方练习模式开始吧！</p>
+      <div class="grammar-tip" style="text-align:left;max-width:500px;margin:20px auto 0;">
+        <strong>📖 本单元语法要点：</strong><br>
+        1. V-ing 作主语：Doing homework isn't interesting.<br>
+        2. 频率副词：always / often / sometimes / rarely / never<br>
+        3. keep sb. + adj.：keep us healthy<br>
+        4. not... at all：I don't like exercise at all.<br>
+        5. Why don't you...? = Why not...?<br>
+        6. stop doing vs stop to do<br>
+        7. love/hate/like/can't stand + doing<br>
+        8. interested（人）vs interesting（物）
+      </div>
+    </div>
+  `;
+}
+
+// ===== EVENT LISTENERS =====
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    state.modeLabel = btn.textContent.trim().split(' ')[1] || btn.textContent.trim();
+    startExercise();
+  });
+});
+
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.topic = chip.dataset.topic;
+    state.topicLabel = chip.textContent.trim();
+    startExercise();
+  });
+});
+
+// ===== INIT =====
+updateStars();
+goHome();
+</script>
+</body>
+</html>
