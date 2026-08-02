@@ -424,6 +424,66 @@
   .wrong-item .answer { color: var(--c-green); font-weight: 600; }
 
   .hidden { display: none !important; }
+
+  /* ===== Score Submission ===== */
+  .submit-section {
+    margin-top: 24px; padding: 24px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #fff5f5 100%);
+    border-radius: 16px; border: 2px solid var(--c-primary);
+  }
+  .submit-section h4 {
+    font-size: 16px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .submit-row {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .submit-input {
+    padding: 12px 16px; border-radius: 12px;
+    border: 2px solid var(--c-border);
+    font-size: 16px; flex: 1; min-width: 200px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .submit-input:focus { border-color: var(--c-primary); }
+  .submit-btn {
+    padding: 12px 24px; border-radius: 12px;
+    border: none; background: var(--c-primary);
+    color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .submit-btn:hover { background: #3a7bc8; transform: scale(1.02); }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+  .code-box {
+    margin-top: 16px; padding: 16px;
+    background: var(--c-card); border-radius: 12px;
+    border: 2px dashed var(--c-green);
+    display: none;
+  }
+  .code-box.show { display: block; animation: popIn 0.3s; }
+  .code-box .code-label {
+    font-size: 13px; color: var(--c-text-light); margin-bottom: 8px;
+  }
+  .code-box .code-text {
+    font-family: 'Courier New', monospace; font-size: 14px;
+    word-break: break-all; line-height: 1.6;
+    background: #f5f5f5; padding: 12px; border-radius: 8px;
+    border: 1px solid #e0e0e0; margin-bottom: 12px;
+    max-height: 100px; overflow-y: auto;
+  }
+  .code-box .copy-btn {
+    padding: 10px 24px; border-radius: 10px;
+    border: none; background: var(--c-green);
+    color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .code-box .copy-btn:hover { background: #389e0d; }
+  .code-box .copy-btn.copied { background: var(--c-text-light); }
+  .code-hint {
+    font-size: 12px; color: var(--c-text-light);
+    margin-top: 8px; line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -561,7 +621,9 @@ const ALL_DATA = [
 // ===== STATE =====
 let state = {
   mode: 'flashcard',
+  modeLabel: '翻卡记忆',
   topic: 'all',
+  topicLabel: '全部',
   currentQuestions: [],
   currentIdx: 0,
   score: 0,
@@ -570,6 +632,7 @@ let state = {
   wrongList: [],
   totalStars: 0,
   answeredFlags: {},
+  startTime: null,
 };
 
 // Load stars from localStorage
@@ -1059,6 +1122,19 @@ function showResults() {
         </div>
       </div>
       ${wrongHtml}
+      <div class="submit-section">
+        <h4>📤 提交成绩给老师</h4>
+        <div class="submit-row">
+          <input class="submit-input" id="studentName" placeholder="输入你的姓名" autocomplete="off" />
+          <button class="submit-btn" onclick="generateScoreCode(${pct})">生成成绩码</button>
+        </div>
+        <div class="code-box" id="codeBox">
+          <div class="code-label">👇 你的成绩码（长按或点击下方按钮复制）</div>
+          <div class="code-text" id="codeText"></div>
+          <button class="copy-btn" id="copyBtn" onclick="copyScoreCode()">📋 复制成绩码</button>
+          <div class="code-hint">复制后粘贴到微信发给老师即可！</div>
+        </div>
+      </div>
       <div class="action-bar" style="margin-top:24px;">
         <button class="action-btn btn-secondary" onclick="restartSameMode()">🔄 再练一次</button>
         <button class="action-btn btn-primary" onclick="goHome()">🏠 返回首页</button>
@@ -1091,6 +1167,7 @@ function startExercise() {
   state.correct = 0;
   state.wrong = 0;
   state.wrongList = [];
+  state.startTime = new Date();
 
   const data = getFilteredData();
 
@@ -1111,6 +1188,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.mode = btn.dataset.mode;
+    state.modeLabel = btn.textContent.trim();
     startExercise();
   });
 });
@@ -1120,9 +1198,79 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     state.topic = chip.dataset.topic;
+    state.topicLabel = chip.textContent.trim();
     startExercise();
   });
 });
+
+// ===== SCORE CODE =====
+function generateScoreCode(pct) {
+  const nameInput = document.getElementById('studentName');
+  const name = nameInput.value.trim();
+  if (!name) {
+    nameInput.style.borderColor = 'var(--c-red)';
+    nameInput.focus();
+    nameInput.placeholder = '请先输入姓名！';
+    return;
+  }
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const duration = state.startTime ? Math.round((now - state.startTime) / 1000) : 0;
+
+  const scoreData = {
+    n: name,
+    m: state.modeLabel,
+    t: state.topicLabel,
+    s: pct,
+    c: state.correct,
+    w: state.wrong,
+    d: duration,
+    tm: timeStr
+  };
+
+  const code = 'EP-' + btoa(unescape(encodeURIComponent(JSON.stringify(scoreData))));
+  document.getElementById('codeText').textContent = code;
+  document.getElementById('codeBox').classList.add('show');
+}
+
+function copyScoreCode() {
+  const codeText = document.getElementById('codeText');
+  const btn = document.getElementById('copyBtn');
+  const code = codeText.textContent;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = '✅ 已复制！';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 复制成绩码'; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => {
+      fallbackCopy(code, btn);
+    });
+  } else {
+    fallbackCopy(code, btn);
+  }
+}
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    btn.textContent = '✅ 已复制！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 复制成绩码'; btn.classList.remove('copied'); }, 2000);
+  } catch(e) {
+    alert('复制失败，请手动长按选中成绩码文字复制');
+  }
+  document.body.removeChild(ta);
+}
 
 // ===== INIT =====
 updateStarsDisplay();
