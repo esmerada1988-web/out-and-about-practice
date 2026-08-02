@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教师成绩后台 — Out & About</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --c-bg: #f5f7fa;
+    --c-card: #ffffff;
+    --c-primary: #4A90D9;
+    --c-primary-light: #E8F1FC;
+    --c-green: #52c41a;
+    --c-green-light: #f6ffed;
+    --c-red: #ff4d4f;
+    --c-red-light: #fff2f0;
+    --c-orange: #fa8c16;
+    --c-orange-light: #fff7e6;
+    --c-purple: #722ed1;
+    --c-purple-light: #f9f0ff;
+    --c-text: #2c3e50;
+    --c-text-light: #8492a6;
+    --c-border: #e8ecf1;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+  }
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .header {
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius);
+    color: #fff;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-lg);
+  }
+  .header h1 { font-size: 26px; margin-bottom: 8px; }
+  .header p { font-size: 14px; opacity: 0.85; }
+
+  .panel {
+    max-width: 1000px;
+    margin: 0 auto 24px;
+    background: var(--c-card);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+  }
+  .panel h2 {
+    font-size: 18px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .input-area {
+    width: 100%; min-height: 120px;
+    border: 2px solid var(--c-border);
+    border-radius: 12px; padding: 16px;
+    font-size: 14px; font-family: 'Courier New', monospace;
+    resize: vertical; outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+  .input-area:focus { border-color: var(--c-primary); }
+  .input-area::placeholder { color: var(--c-text-light); font-family: 'PingFang SC', sans-serif; }
+  .input-hint {
+    font-size: 13px; color: var(--c-text-light);
+    margin-top: 8px; line-height: 1.5;
+  }
+  .btn-row {
+    display: flex; gap: 12px; margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 28px; border-radius: 24px;
+    border: none; font-size: 15px; cursor: pointer;
+    font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--c-primary); color: #fff; }
+  .btn-primary:hover { background: #3a7bc8; }
+  .btn-secondary { background: #f0f0f0; color: var(--c-text); }
+  .btn-secondary:hover { background: #e0e0e0; }
+  .btn-danger { background: var(--c-red-light); color: var(--c-red); border: 2px solid var(--c-red); }
+  .btn-danger:hover { background: var(--c-red); color: #fff; }
+
+  /* Stats */
+  .stats-row {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    flex: 1; min-width: 140px;
+    background: var(--c-card); border-radius: 12px;
+    padding: 20px; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-card .num { font-size: 32px; font-weight: 700; }
+  .stat-card .label { font-size: 13px; color: var(--c-text-light); margin-top: 4px; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--c-border);
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: var(--c-primary-light);
+    padding: 12px 16px; text-align: left;
+    font-weight: 600; color: var(--c-text);
+    cursor: pointer; user-select: none;
+    white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  th:hover { background: #d0e3f7; }
+  th .sort-icon { font-size: 12px; opacity: 0.5; margin-left: 4px; }
+  th.sorted .sort-icon { opacity: 1; color: var(--c-primary); }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--c-border);
+  }
+  tr:hover { background: var(--c-primary-light); }
+  tr:last-child td { border-bottom: none; }
+  .score-badge {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 12px; font-weight: 600; font-size: 13px;
+  }
+  .score-high { background: var(--c-green-light); color: var(--c-green); }
+  .score-mid { background: var(--c-orange-light); color: var(--c-orange); }
+  .score-low { background: var(--c-red-light); color: var(--c-red); }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--c-text-light);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--c-text); color: #fff;
+    padding: 12px 24px; border-radius: 24px;
+    font-size: 14px; box-shadow: var(--shadow-lg);
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  .hidden { display: none !important; }
+
+  /* Duration formatting */
+  .duration { color: var(--c-text-light); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Out & About 教师成绩后台</h1>
+  <p>粘贴学生发来的成绩码，自动生成成绩表</p>
+</div>
+
+<!-- Input Panel -->
+<div class="panel">
+  <h2>📥 录入成绩码</h2>
+  <textarea class="input-area" id="codeInput" placeholder="将学生微信发来的成绩码粘贴在这里（每行一个，支持批量粘贴）&#10;&#10;例如：&#10;EP-eyJuIjoi5bCP5piOIiwibSI6...&#10;EP-eyJuIjoi5byg5LiHIiwibSI6..."></textarea>
+  <div class="input-hint">
+    💡 支持批量录入：多个成绩码可以一行一个粘贴，也可以直接粘贴包含成绩码的整段微信消息
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="parseCodes()">解析成绩</button>
+    <button class="btn btn-secondary" onclick="loadSaved()">加载已保存</button>
+    <button class="btn btn-danger" onclick="clearAll()">清空全部</button>
+  </div>
+</div>
+
+<!-- Stats Panel -->
+<div class="panel hidden" id="statsPanel">
+  <h2>📈 统计概览</h2>
+  <div class="stats-row" id="statsRow"></div>
+</div>
+
+<!-- Results Table -->
+<div class="panel hidden" id="tablePanel">
+  <h2>📋 成绩明细 <span style="font-size:14px;color:var(--c-text-light);font-weight:400;" id="recordCount"></span></h2>
+  <div class="btn-row" style="margin-top:0;margin-bottom:16px;">
+    <button class="btn btn-secondary" onclick="exportCSV()">💾 导出 CSV</button>
+    <button class="btn btn-secondary" onclick="exportJSON()">📋 导出 JSON</button>
+  </div>
+  <div class="table-wrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable('n')">姓名 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('m')">练习模式 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('t')">主题 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('s')">分数 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('c')">答对 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('w')">答错 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('d')">用时 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('tm')">提交时间 <span class="sort-icon">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Empty State -->
+<div class="panel" id="emptyState">
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <p>还没有成绩数据</p>
+    <p style="font-size:13px;margin-top:8px;">将学生发来的成绩码粘贴到上方输入框，点击「解析成绩」即可</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let records = [];
+let sortKey = 'tm';
+let sortDir = -1; // -1 = desc, 1 = asc
+
+// Load saved records from localStorage
+function loadSaved() {
+  try {
+    const saved = localStorage.getItem('teacherRecords');
+    if (saved) {
+      records = JSON.parse(saved);
+      if (records.length > 0) {
+        renderTable();
+        showToast(`已加载 ${records.length} 条记录`);
+      } else {
+        showToast('没有已保存的记录');
+      }
+    } else {
+      showToast('没有已保存的记录');
+    }
+  } catch(e) {
+    showToast('加载失败');
+  }
+}
+
+function saveRecords() {
+  try {
+    localStorage.setItem('teacherRecords', JSON.stringify(records));
+  } catch(e) {}
+}
+
+function parseCodes() {
+  const input = document.getElementById('codeInput').value.trim();
+  if (!input) {
+    showToast('请先粘贴成绩码');
+    return;
+  }
+
+  // Extract all EP-xxx codes from the input
+  const codeRegex = /EP-[A-Za-z0-9+/=]+/g;
+  const codes = input.match(codeRegex);
+
+  if (!codes || codes.length === 0) {
+    showToast('未找到有效的成绩码（需以 EP- 开头）');
+    return;
+  }
+
+  let added = 0;
+  let failed = 0;
+
+  codes.forEach(code => {
+    try {
+      // Remove EP- prefix and decode
+      const b64 = code.substring(3);
+      const jsonStr = decodeURIComponent(escape(atob(b64)));
+      const data = JSON.parse(jsonStr);
+      records.push({
+        n: data.n || '未知',
+        m: data.m || '未知',
+        t: data.t || '未知',
+        s: parseInt(data.s) || 0,
+        c: parseInt(data.c) || 0,
+        w: parseInt(data.w) || 0,
+        d: parseInt(data.d) || 0,
+        tm: data.tm || '未知',
+        raw: code
+      });
+      added++;
+    } catch(e) {
+      failed++;
+    }
+  });
+
+  saveRecords();
+  renderTable();
+
+  if (added > 0) {
+    showToast(`成功录入 ${added} 条${failed > 0 ? '，' + failed + ' 条失败' : ''}`);
+    document.getElementById('codeInput').value = '';
+  } else {
+    showToast('所有成绩码解析失败');
+  }
+}
+
+function clearAll() {
+  if (records.length === 0) {
+    showToast('没有数据可清空');
+    return;
+  }
+  if (confirm(`确定清空全部 ${records.length} 条记录吗？此操作不可撤销。`)) {
+    records = [];
+    saveRecords();
+    renderTable();
+    showToast('已清空全部记录');
+  }
+}
+
+function renderTable() {
+  const empty = document.getElementById('emptyState');
+  const tablePanel = document.getElementById('tablePanel');
+  const statsPanel = document.getElementById('statsPanel');
+
+  if (records.length === 0) {
+    empty.classList.remove('hidden');
+    tablePanel.classList.add('hidden');
+    statsPanel.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  tablePanel.classList.remove('hidden');
+  statsPanel.classList.remove('hidden');
+
+  // Update count
+  document.getElementById('recordCount').textContent = `（共 ${records.length} 条）`;
+
+  // Sort records
+  const sorted = [...records].sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string') {
+      va = va.toLowerCase();
+      vb = vb.toLowerCase();
+      return sortDir * va.localeCompare(vb, 'zh');
+    }
+    return sortDir * (va - vb);
+  });
+
+  // Render table
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = sorted.map((r, i) => {
+    const scoreClass = r.s >= 80 ? 'score-high' : r.s >= 50 ? 'score-mid' : 'score-low';
+    const duration = formatDuration(r.d);
+    return `
+      <tr>
+        <td><b>${escapeHtml(r.n)}</b></td>
+        <td>${escapeHtml(r.m)}</td>
+        <td>${escapeHtml(r.t)}</td>
+        <td><span class="score-badge ${scoreClass}">${r.s}分</span></td>
+        <td style="color:var(--c-green);font-weight:600;">${r.c}</td>
+        <td style="color:var(--c-red);font-weight:600;">${r.w}</td>
+        <td class="duration">${duration}</td>
+        <td style="font-size:13px;color:var(--c-text-light);">${escapeHtml(r.tm)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Update sort indicators
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('sorted');
+    th.querySelector('.sort-icon').textContent = '↕';
+  });
+  const ths = document.querySelectorAll('th');
+  const keys = ['n','m','t','s','c','w','d','tm'];
+  const idx = keys.indexOf(sortKey);
+  if (idx >= 0 && ths[idx]) {
+    ths[idx].classList.add('sorted');
+    ths[idx].querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+  }
+
+  // Render stats
+  renderStats();
+}
+
+function renderStats() {
+  const total = records.length;
+  const avgScore = total > 0 ? Math.round(records.reduce((s, r) => s + r.s, 0) / total) : 0;
+  const highScore = total > 0 ? Math.max(...records.map(r => r.s)) : 0;
+  const lowScore = total > 0 ? Math.min(...records.map(r => r.s)) : 0;
+  const totalCorrect = records.reduce((s, r) => s + r.c, 0);
+  const totalWrong = records.reduce((s, r) => s + r.w, 0);
+  const passRate = total > 0 ? Math.round(records.filter(r => r.s >= 60).length / total * 100) : 0;
+
+  // Unique students
+  const uniqueNames = [...new Set(records.map(r => r.n))];
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-primary)">${total}</div>
+      <div class="label">总提交次数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-purple)">${uniqueNames.length}</div>
+      <div class="label">参与学生数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-green)">${avgScore}</div>
+      <div class="label">平均分</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-orange)">${passRate}%</div>
+      <div class="label">及格率（≥60分）</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-green)">${totalCorrect}</div>
+      <div class="label">总答对题数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" style="color:var(--c-red)">${totalWrong}</div>
+      <div class="label">总答错题数</div>
+    </div>
+  `;
+}
+
+function sortTable(key) {
+  if (sortKey === key) {
+    sortDir *= -1;
+  } else {
+    sortKey = key;
+    sortDir = 1;
+  }
+  renderTable();
+}
+
+function formatDuration(sec) {
+  if (!sec || sec === 0) return '—';
+  if (sec < 60) return sec + '秒';
+  const min = Math.floor(sec / 60);
+  const s = sec % 60;
+  return s > 0 ? `${min}分${s}秒` : `${min}分钟`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function exportCSV() {
+  if (records.length === 0) {
+    showToast('没有数据可导出');
+    return;
+  }
+
+  const headers = ['姓名', '练习模式', '主题', '分数', '答对', '答错', '用时(秒)', '提交时间'];
+  const rows = records.map(r => [r.n, r.m, r.t, r.s, r.c, r.w, r.d, r.tm]);
+
+  // Add BOM for Excel UTF-8 compatibility
+  let csv = '\uFEFF' + headers.join(',') + '\n';
+  rows.forEach(row => {
+    csv += row.map(cell => {
+      const s = String(cell);
+      return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `成绩表_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV 已导出');
+}
+
+function exportJSON() {
+  if (records.length === 0) {
+    showToast('没有数据可导出');
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `成绩表_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON 已导出');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Auto-load saved records on page load
+try {
+  const saved = localStorage.getItem('teacherRecords');
+  if (saved) {
+    records = JSON.parse(saved);
+    if (records.length > 0) renderTable();
+  }
+} catch(e) {}
+
+// Allow Enter key in textarea to submit (Ctrl+Enter)
+document.getElementById('codeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    parseCodes();
+  }
+});
+</script>
+</body>
+</html>
