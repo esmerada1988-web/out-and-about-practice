@@ -3,6 +3,14 @@ import { Redis } from '@upstash/redis';
 const redis = Redis.fromEnv();
 const WLIST_KEY = 'student_whitelist';
 
+function parseList(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string' && raw) {
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch(e) { return []; }
+  }
+  return [];
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -25,25 +33,19 @@ export default async function handler(req, res) {
       const studentName = name.trim();
 
       const raw = await redis.get(WLIST_KEY);
-      let list = [];
-      if (raw) {
-        try { list = JSON.parse(raw); if (!Array.isArray(list)) list = []; } catch(e) { list = []; }
-      }
+      let list = parseList(raw);
 
       if (action === 'add') {
         if (!list.some(n => n.toLowerCase() === studentName.toLowerCase())) {
           list.push(studentName);
-          const setResult = await redis.set(WLIST_KEY, JSON.stringify(list));
-          // Debug: read back immediately
-          const readback = await redis.get(WLIST_KEY);
-          return res.json({ ok: true, students: list, debug: { setResult: setResult, readback: readback, key: WLIST_KEY } });
+          await redis.set(WLIST_KEY, list);
         }
         return res.json({ ok: true, students: list });
       }
 
       if (action === 'remove') {
         list = list.filter(n => n.toLowerCase() !== studentName.toLowerCase());
-        await redis.set(WLIST_KEY, JSON.stringify(list));
+        await redis.set(WLIST_KEY, list);
         return res.json({ ok: true, students: list });
       }
 
@@ -59,11 +61,7 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const raw = await redis.get(WLIST_KEY);
-      let list = [];
-      if (raw) {
-        try { list = JSON.parse(raw); if (!Array.isArray(list)) list = []; } catch(e) { list = []; }
-      }
-      return res.json({ students: list });
+      return res.json({ students: parseList(raw) });
     }
 
     // Student checks if their name is on the list
@@ -73,10 +71,7 @@ export default async function handler(req, res) {
     }
 
     const raw = await redis.get(WLIST_KEY);
-    let list = [];
-    if (raw) {
-      try { list = JSON.parse(raw); if (!Array.isArray(list)) list = []; } catch(e) { list = []; }
-    }
+    const list = parseList(raw);
 
     if (list.length === 0) {
       return res.json({ valid: false, empty: true });
