@@ -1132,7 +1132,7 @@ function showResults() {
       <div class="submit-section">
         <h3>📤 提交成绩给老师</h3>
         <input type="text" id="studentName" placeholder="输入你的姓名" />
-        <button class="copy-btn" onclick="generateScoreCode()">生成成绩码</button>
+        <button class="copy-btn" onclick="generateScoreCode()">📤 提交成绩给老师</button>
         <div class="code-output" id="codeOutput"></div>
         <button class="copy-btn" id="copyBtn" style="display:none;background:var(--c-blue);" onclick="copyScoreCode()">📋 复制成绩码</button>
       </div>
@@ -1144,23 +1144,48 @@ function showResults() {
   `;
 }
 
-function generateScoreCode() {
+async function generateScoreCode() {
   const name = document.getElementById('studentName').value.trim();
   if (!name) { alert('请输入姓名'); return; }
+  var total = (state.correct || 0) + (state.wrong || 0);
+  var pct = total > 0 ? Math.round(state.correct / total * 100) : 0;
+  var scoreData = {
+    name: name, source: 'THINK1 U1', mode: state.modeLabel || '',
+    score: state.score || 0, correct: state.correct || 0,
+    wrong: state.wrong || 0, total: total, pct: pct
+  };
+  var btn = document.querySelector('button[onclick*="generateScoreCode"]');
+  if (btn) { btn.textContent = '⏳ 提交中...'; btn.disabled = true; }
+  try {
+    var resp = await fetch('/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scoreData)
+    });
+    if (resp.ok) {
+      var data = await resp.json();
+      if (data.success) {
+        var section = document.querySelector('.submit-section');
+        if (section) {
+          section.innerHTML = '<div style="padding:24px 16px;text-align:center;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:16px;">' +
+            '<div style="font-size:48px;margin-bottom:8px;">✅</div>' +
+            '<div style="font-size:20px;font-weight:700;color:#2e7d32;margin-bottom:4px;">成绩已自动提交给老师！</div>' +
+            '<div style="font-size:14px;color:#4caf50;">' + name + '，本次得分 ' + pct + ' 分（答对 ' + state.correct + ' / ' + total + '）</div></div>';
+        }
+        return;
+      }
+    }
+  } catch (e) {}
+  // 回退：生成成绩码
+  if (btn) { btn.textContent = '生成成绩码'; btn.disabled = false; }
   const seconds = Math.round((Date.now() - state.startTime) / 1000);
-  const data = {
-    n: name,
-    u: 'THINK1-U1',
-    m: state.modeLabel,
-    t: state.topicLabel,
-    s: state.score,
-    c: state.correct,
-    w: state.wrong,
-    total: state.currentQuestions.length,
-    time: seconds,
+  const data2 = {
+    n: name, u: 'THINK1-U1', m: state.modeLabel, t: state.topicLabel,
+    s: state.score, c: state.correct, w: state.wrong,
+    total: state.currentQuestions.length, time: seconds,
     date: new Date().toISOString().slice(0, 10)
   };
-  const code = 'EP-' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const code = 'EP-' + btoa(unescape(encodeURIComponent(JSON.stringify(data2))));
   const output = document.getElementById('codeOutput');
   output.textContent = code;
   output.style.display = 'block';
@@ -1237,6 +1262,6 @@ document.querySelectorAll('.filter-chip').forEach(chip => {
 updateStars();
 goHome();
 </script>
-<script src="js/auto-submit.js?v=3"></script>
+<!-- auto-submit logic now inlined, no external JS needed -->
 </body>
 </html>
