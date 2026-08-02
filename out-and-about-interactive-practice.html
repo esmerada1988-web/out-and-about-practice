@@ -1079,6 +1079,8 @@ function renderCurrentMode() {
 function showResults() {
   const total = state.currentQuestions.length || state.matchState?.total || 0;
   const pct = total > 0 ? Math.round((state.correct / (state.correct + state.wrong)) * 100) : 0;
+  // 关键：把本次结果快照存到 state.lastResult，提交时优先用快照，避免 state 被重置导致 0 分
+  state.lastResult = { correct: state.correct, wrong: state.wrong, score: pct, total: total, pct: pct, mode: state.modeLabel || '', source: 'Out & About' };
   let msg, emoji;
   if (pct >= 90) { msg = '太棒了！你完全掌握了这些内容！'; emoji = '🏆'; }
   else if (pct >= 70) { msg = '做得不错！再练几次就完美了！'; emoji = '🎉'; }
@@ -1217,11 +1219,15 @@ async function generateScoreCode(pct) {
     nameInput.placeholder = '请先输入姓名！';
     return;
   }
-  var total = (state.correct || 0) + (state.wrong || 0);
+  // 关键：优先使用 showResults 时存的快照，避免 state 被重置
+  var snap = state.lastResult || {};
+  var correct = snap.correct || 0;
+  var wrong = snap.wrong || 0;
+  var finalPct = snap.pct || pct || 0;
+  var total = (correct + wrong) || snap.total || 0;
   var scoreData = {
-    name: name, source: 'Out & About', mode: state.modeLabel || '',
-    score: pct || 0, correct: state.correct || 0,
-    wrong: state.wrong || 0, total: total, pct: pct || 0
+    name: name, source: snap.source || 'Out & About', mode: snap.mode || state.modeLabel || '',
+    score: finalPct, correct: correct, wrong: wrong, total: total, pct: finalPct
   };
   var btn = document.querySelector('button[onclick*="generateScoreCode"]');
   if (btn) { btn.textContent = '⏳ 提交中...'; btn.disabled = true; }
@@ -1239,7 +1245,7 @@ async function generateScoreCode(pct) {
           box.innerHTML = '<div style="padding:24px 16px;text-align:center;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:16px;">' +
             '<div style="font-size:48px;margin-bottom:8px;">✅</div>' +
             '<div style="font-size:20px;font-weight:700;color:#2e7d32;margin-bottom:4px;">成绩已自动提交给老师！</div>' +
-            '<div style="font-size:14px;color:#4caf50;">' + name + '，本次得分 ' + (pct || 0) + ' 分（答对 ' + state.correct + ' / ' + total + '）</div></div>';
+            '<div style="font-size:14px;color:#4caf50;">' + name + '，本次得分 ' + finalPct + ' 分（答对 ' + correct + ' / ' + total + '）</div></div>';
           box.classList.add('show');
         }
         return;
