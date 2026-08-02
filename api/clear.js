@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   // Allow POST and DELETE
@@ -13,9 +15,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    await kv.del('scores');
+    await redis.del('scores');
     res.status(200).json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Storage not available' });
+    res.status(500).json({ error: 'Storage not available', detail: err.message });
   }
 }
