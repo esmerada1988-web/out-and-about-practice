@@ -1,7 +1,6 @@
 const { Redis } = require('@upstash/redis');
 
 module.exports = async (req, res) => {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,45 +10,79 @@ module.exports = async (req, res) => {
   }
 
   const r = Redis.fromEnv();
+  const WLIST_KEY = 'student_whitelist';
 
-  // POST: Teacher sets access code
+  async function getWhitelist() {
+    const raw = await r.get(WLIST_KEY);
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  async function saveWhitelist(arr) {
+    await r.set(WLIST_KEY, JSON.stringify(arr));
+  }
+
+  // POST: Teacher adds or removes a student
   if (req.method === 'POST') {
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch(e) { body = {}; }
     }
-    const { teacherKey, accessCode } = body || {};
+    const { teacherKey, action, name } = body || {};
     if (teacherKey !== process.env.TEACHER_KEY) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    if (!accessCode || accessCode.trim().length < 1) {
-      return res.status(400).json({ error: 'Access code required' });
+    if (!name || name.trim().length < 1) {
+      return res.status(400).json({ error: 'Student name required' });
     }
-    const code = accessCode.trim();
-    await r.set('access_code', code);
-    return res.json({ ok: true, accessCode: code });
+    const studentName = name.trim();
+    let list = await getWhitelist();
+
+    if (action === 'add') {
+      if (!list.some(n => n.toLowerCase() === studentName.toLowerCase())) {
+        list.push(studentName);
+        await saveWhitelist(list);
+      }
+      return res.json({ ok: true, students: list });
+    }
+
+    if (action === 'remove') {
+      list = list.filter(n => n.toLowerCase() !== studentName.toLowerCase());
+      await saveWhitelist(list);
+      return res.json({ ok: true, students: list });
+    }
+
+    return res.status(400).json({ error: 'Invalid action' });
   }
 
-  // GET: Teacher retrieves current code
+  // GET
   const query = req.query || {};
-  if (query.getcode === '1' || query.getcode === 'true') {
+
+  // Teacher retrieves full student list
+  if (query.getlist === '1' || query.getlist === 'true') {
     if (query.key !== process.env.TEACHER_KEY) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const current = await r.get('access_code');
-    return res.json({ accessCode: current || null });
+    const list = await getWhitelist();
+    return res.json({ students: list });
   }
 
-  // GET: Student checks access code
-  const code = query.code;
-  if (!code) {
-    return res.json({ valid: false, noCode: true });
+  // Student checks if their name is on the list
+  const name = query.name;
+  if (!name) {
+    return res.json({ valid: false, empty: true });
   }
 
-  const storedCode = await r.get('access_code');
-  if (!storedCode) {
-    return res.json({ valid: false, noCode: true });
+  const list = await getWhitelist();
+  if (list.length === 0) {
+    return res.json({ valid: false, empty: true });
   }
 
-  return res.json({ valid: storedCode === code.trim() });
+  const matched = list.find(n => n.toLowerCase() === name.trim().toLowerCase());
+  return res.json({ valid: !!matched, name: matched || null });
 };
