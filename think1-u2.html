@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THINK 1 - Unit 2 Spending Money | 交互式词汇练习</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --c-primary: #00838f;
+    --c-primary-light: #4dd0e1;
+    --c-primary-dark: #005662;
+    --c-green: #00b894;
+    --c-red: #e74c3c;
+    --c-orange: #fdcb6e;
+    --c-orange-dark: #f39c12;
+    --c-blue: #0984e3;
+    --c-pink: #fd79a8;
+    --c-purple: #6c5ce7;
+    --c-bg: #e0f7fa;
+    --c-card: #ffffff;
+    --c-text: #2d3436;
+    --c-text-light: #636e72;
+    --c-border: #dfe6e9;
+    --radius: 16px;
+    --shadow: 0 4px 20px rgba(0,131,143,0.1);
+    --shadow-hover: 0 8px 30px rgba(0,131,143,0.2);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+    color: var(--c-text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .header {
+    text-align: center;
+    padding: 24px 16px;
+    background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%);
+    border-radius: var(--radius);
+    color: white;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .header h1 { font-size: 22px; margin-bottom: 6px; }
+  .header .subtitle { font-size: 14px; opacity: 0.85; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .section-filters {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 12px;
+  }
+  .filter-chip {
+    padding: 8px 14px; border-radius: 20px;
+    border: 2px solid var(--c-border); background: white;
+    font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .filter-chip.active { border-color: var(--c-primary); background: var(--c-primary); color: white; }
+  .filter-chip:hover:not(.active) { border-color: var(--c-primary-light); }
+  .mode-bar {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 8px 0; margin-bottom: 12px; -webkit-overflow-scrolling: touch;
+  }
+  .mode-btn {
+    flex: 1; min-width: 100px; padding: 12px 8px;
+    border-radius: 12px; border: 2px solid var(--c-border); background: white;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; text-align: center;
+  }
+  .mode-btn.active {
+    border-color: var(--c-primary); background: var(--c-primary); color: white;
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,131,143,0.3);
+  }
+  .mode-btn:hover:not(.active) { border-color: var(--c-primary-light); }
+  .stars-display { text-align: center; font-size: 16px; margin-bottom: 12px; }
+  .stars-display .star { color: var(--c-orange-dark); }
+  .practice-area {
+    background: var(--c-card); border-radius: var(--radius);
+    padding: 24px 16px; box-shadow: var(--shadow); min-height: 400px;
+  }
+  .progress-bar {
+    width: 100%; height: 8px; background: var(--c-border);
+    border-radius: 4px; margin-bottom: 16px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--c-primary), var(--c-primary-light));
+    border-radius: 4px; transition: width 0.3s;
+  }
+  .question-num { text-align: center; font-size: 13px; color: var(--c-text-light); margin-bottom: 12px; }
+  .flashcard-container { perspective: 1000px; width: 100%; max-width: 400px; margin: 0 auto; }
+  .flashcard {
+    width: 100%; height: 220px; position: relative; cursor: pointer;
+    transform-style: preserve-3d; transition: transform 0.6s; margin: 0 auto;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .flashcard-front, .flashcard-back {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border-radius: var(--radius);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 20px; text-align: center;
+  }
+  .flashcard-front { background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%); color: white; }
+  .flashcard-back { background: linear-gradient(135deg, var(--c-green) 0%, #00a381 100%); color: white; transform: rotateY(180deg); }
+  .flashcard-word { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .flashcard-type { font-size: 12px; opacity: 0.7; }
+  .flashcard-meaning { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .flashcard-example { font-size: 13px; opacity: 0.85; line-height: 1.5; margin-top: 8px; }
+  .flashcard-section { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+  .flashcard-hint { text-align: center; font-size: 12px; color: var(--c-text-light); margin-top: 12px; }
+  .flashcard-actions { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+  .flashcard-btn { padding: 10px 24px; border-radius: 24px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-know { background: var(--c-green); color: white; }
+  .btn-dont { background: var(--c-red); color: white; }
+  .flashcard-btn:hover { transform: scale(1.05); }
+  .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 500px; margin: 0 auto; }
+  .match-item {
+    padding: 14px 10px; border-radius: 12px; border: 2px solid var(--c-border);
+    background: white; text-align: center; font-size: 14px; cursor: pointer;
+    transition: all 0.2s; user-select: none;
+  }
+  .match-item:hover { border-color: var(--c-primary-light); }
+  .match-item.selected { border-color: var(--c-primary); background: var(--c-primary); color: white; }
+  .match-item.correct { border-color: var(--c-green); background: var(--c-green); color: white; pointer-events: none; }
+  .match-item.wrong { border-color: var(--c-red); background: var(--c-red); color: white; animation: shake 0.4s; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .fill-blank-question { font-size: 18px; line-height: 1.8; text-align: center; margin: 16px 0; }
+  .blank {
+    display: inline-block; min-width: 80px; padding: 4px 12px; margin: 0 4px;
+    border-bottom: 3px solid var(--c-primary); text-align: center; font-weight: 700; color: var(--c-primary);
+  }
+  .blank.filled { color: var(--c-text); }
+  .blank.correct { color: var(--c-green); border-color: var(--c-green); }
+  .blank.wrong { color: var(--c-red); border-color: var(--c-red); }
+  .word-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+  .word-chip {
+    padding: 8px 16px; border-radius: 20px; background: var(--c-bg);
+    border: 2px solid var(--c-primary-light); font-size: 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .word-chip:hover { background: var(--c-primary-light); color: white; }
+  .word-chip.used { opacity: 0.3; pointer-events: none; }
+  .mc-question { font-size: 18px; text-align: center; margin: 16px 0 20px; font-weight: 600; }
+  .mc-options { display: flex; flex-direction: column; gap: 10px; max-width: 400px; margin: 0 auto; }
+  .mc-option {
+    padding: 14px 16px; border-radius: 12px; border: 2px solid var(--c-border);
+    background: white; font-size: 15px; cursor: pointer; transition: all 0.2s; text-align: left;
+  }
+  .mc-option:hover { border-color: var(--c-primary-light); }
+  .mc-option.correct { border-color: var(--c-green); background: rgba(0,184,148,0.1); color: var(--c-green); }
+  .mc-option.wrong { border-color: var(--c-red); background: rgba(231,76,60,0.1); color: var(--c-red); }
+  .mc-option.disabled { pointer-events: none; }
+  .so-target {
+    min-height: 50px; border: 2px dashed var(--c-primary-light); border-radius: 12px;
+    padding: 12px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px;
+    align-items: center; justify-content: center;
+  }
+  .so-word { padding: 8px 14px; border-radius: 10px; background: var(--c-primary); color: white; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .so-word:hover { opacity: 0.8; }
+  .so-word.in-target { background: var(--c-green); }
+  .so-bank { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .so-translation { text-align: center; font-size: 15px; color: var(--c-text-light); margin-bottom: 16px; font-style: italic; }
+  .results-screen { text-align: center; padding: 20px; }
+  .results-score { font-size: 48px; font-weight: 800; color: var(--c-primary); }
+  .results-score .total { font-size: 20px; color: var(--c-text-light); }
+  .results-msg { font-size: 18px; margin: 8px 0 16px; font-weight: 600; }
+  .results-detail { display: flex; justify-content: center; gap: 24px; margin: 16px 0; flex-wrap: wrap; }
+  .results-stat { text-align: center; }
+  .results-stat .num { font-size: 24px; font-weight: 700; }
+  .results-stat .label { font-size: 12px; color: var(--c-text-light); }
+  .wrong-list { text-align: left; margin-top: 16px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .wrong-list h3 { font-size: 15px; margin-bottom: 8px; color: var(--c-red); }
+  .wrong-item { background: rgba(231,76,60,0.08); border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; font-size: 13px; }
+  .wrong-item .correct-answer { color: var(--c-green); font-weight: 600; }
+  .action-bar { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+  .action-btn { padding: 12px 28px; border-radius: 24px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--c-primary); color: white; }
+  .btn-secondary { background: white; color: var(--c-primary); border: 2px solid var(--c-primary); }
+  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .submit-section {
+    background: linear-gradient(135deg, #b2ebf2 0%, #80deea 100%);
+    border-radius: var(--radius); padding: 20px; margin-top: 24px;
+    max-width: 500px; margin-left: auto; margin-right: auto;
+  }
+  .submit-section h3 { font-size: 16px; margin-bottom: 12px; color: var(--c-primary-dark); }
+  .submit-section input {
+    width: 100%; padding: 12px 16px; border-radius: 12px;
+    border: 2px solid var(--c-primary-light); font-size: 15px; margin-bottom: 10px; outline: none;
+  }
+  .submit-section input:focus { border-color: var(--c-primary); }
+  .code-output {
+    background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 14px;
+    font-size: 12px; word-break: break-all; margin-top: 10px; display: none; max-height: 120px; overflow-y: auto;
+  }
+  .copy-btn {
+    width: 100%; padding: 12px; border-radius: 12px; border: none;
+    background: var(--c-green); color: white; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 8px; transition: all 0.2s;
+  }
+  .copy-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,184,148,0.3); }
+  .copy-btn:active { transform: scale(0.98); }
+  .grammar-tip {
+    background: rgba(0,131,143,0.08); border-left: 4px solid var(--c-primary);
+    border-radius: 8px; padding: 12px 16px; margin-top: 12px;
+    font-size: 13px; color: var(--c-text-light); line-height: 1.6;
+  }
+  .grammar-tip strong { color: var(--c-primary-dark); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>THINK 1 · Unit 2 Spending Money</h1>
+  <div class="subtitle">交互式词汇练习 · 5种模式 · 即时反馈</div>
+  <div class="badge">📚 90+ 词汇短语 · 按教材章节分类</div>
+</div>
+
+<div class="stars-display">
+  <span class="star">⭐</span> <span id="starCount">0</span> 颗星
+</div>
+
+<div class="section-filters">
+  <div class="filter-chip active" data-topic="all">全部</div>
+  <div class="filter-chip" data-topic="p20">P20-21 购物&形容词</div>
+  <div class="filter-chip" data-topic="p22">P22-23 商店&感官动词</div>
+  <div class="filter-chip" data-topic="p24">P24-25 服装&物品</div>
+  <div class="filter-chip" data-topic="p26">P26-27 货币&国家</div>
+  <div class="filter-chip" data-topic="grammar">语法要点</div>
+</div>
+
+<div class="mode-bar">
+  <button class="mode-btn active" data-mode="flashcard">📇 翻卡记忆</button>
+  <button class="mode-btn" data-mode="matching">🔗 连线匹配</button>
+  <button class="mode-btn" data-mode="fillblank">✏️ 填空题</button>
+  <button class="mode-btn" data-mode="multiplechoice">📝 选择题</button>
+  <button class="mode-btn" data-mode="ordering">🔢 句子排序</button>
+</div>
+
+<div class="practice-area" id="practiceArea">
+  <div id="contentArea"></div>
+</div>
+
+<script>
+const vocabData = [
+  // P20-21 Shopping & Adjectives
+  {en:"cheap", zh:"便宜的", type:"adj.", section:"p20", example:"This shirt is very cheap.", topic:"P20-21 购物&形容词"},
+  {en:"fantastic", zh:"极好的", type:"adj.", section:"p20", example:"The food was fantastic!", topic:"P20-21 购物&形容词"},
+  {en:"expensive", zh:"昂贵的", type:"adj.", section:"p20", example:"That car is too expensive.", topic:"P20-21 购物&形容词"},
+  {en:"chemist's", zh:"药店", type:"n.", section:"p20", example:"I need to go to the chemist's.", topic:"P20-21 购物&形容词"},
+  {en:"second-hand", zh:"二手的", type:"adj.", section:"p20", example:"I bought a second-hand bike.", topic:"P20-21 购物&形容词"},
+  {en:"stuff", zh:"物品", type:"n.", section:"p20", example:"Where is all my stuff?", topic:"P20-21 购物&形容词"},
+  {en:"crowded", zh:"拥挤的", type:"adj.", section:"p20", example:"The shop was very crowded.", topic:"P20-21 购物&形容词"},
+  {en:"awful", zh:"糟糕的", type:"adj.", section:"p20", example:"The weather is awful today.", topic:"P20-21 购物&形容词"},
+  {en:"waste", zh:"浪费", type:"v./n.", section:"p20", example:"Don't waste your money.", topic:"P20-21 购物&形容词"},
+  {en:"comfortable", zh:"舒适的", type:"adj.", section:"p20", example:"This sofa is very comfortable.", topic:"P20-21 购物&形容词"},
+  {en:"a waste of time", zh:"浪费时间", type:"phrase", section:"p20", example:"Playing games is a waste of time.", topic:"P20-21 购物&形容词"},
+  {en:"dream about doing", zh:"梦想做某事", type:"phrase", section:"p20", example:"She dreams about traveling the world.", topic:"P20-21 购物&形容词"},
+  {en:"comfort", zh:"安慰；舒适", type:"v./n.", section:"p20", example:"Music gives me comfort.", topic:"P20-21 购物&形容词"},
+  {en:"old-fashioned", zh:"过时的", type:"adj.", section:"p20", example:"The dress looks old-fashioned.", topic:"P20-21 购物&形容词"},
+  {en:"at the moment", zh:"此时此刻", type:"phrase", section:"p20", example:"She is shopping at the moment.", topic:"P20-21 购物&形容词"},
+
+  // P22-23 Shops & Sensory Verbs
+  {en:"bookshop", zh:"书店", type:"n.", section:"p22", example:"I love reading in the bookshop.", topic:"P22-23 商店&感官动词"},
+  {en:"clothes shop", zh:"服装店", type:"n.", section:"p22", example:"She works in a clothes shop.", topic:"P22-23 商店&感官动词"},
+  {en:"supermarket", zh:"超市", type:"n.", section:"p22", example:"We buy food at the supermarket.", topic:"P22-23 商店&感官动词"},
+  {en:"sports shop", zh:"体育商品店", type:"n.", section:"p22", example:"He bought trainers at the sports shop.", topic:"P22-23 商店&感官动词"},
+  {en:"coffee shop", zh:"咖啡店", type:"n.", section:"p22", example:"Let's meet at the coffee shop.", topic:"P22-23 商店&感官动词"},
+  {en:"department store", zh:"百货商店", type:"n.", section:"p22", example:"The department store has five floors.", topic:"P22-23 商店&感官动词"},
+  {en:"mobile phone shop", zh:"手机店", type:"n.", section:"p22", example:"I need to go to the mobile phone shop.", topic:"P22-23 商店&感官动词"},
+  {en:"look", zh:"看起来", type:"v.", section:"p22", example:"You look great today!", topic:"P22-23 商店&感官动词"},
+  {en:"sound", zh:"听起来", type:"v.", section:"p22", example:"That sounds like a good idea.", topic:"P22-23 商店&感官动词"},
+  {en:"smell", zh:"闻起来", type:"v.", section:"p22", example:"The food smells delicious.", topic:"P22-23 商店&感官动词"},
+  {en:"taste", zh:"尝起来", type:"v.", section:"p22", example:"The soup tastes awful.", topic:"P22-23 商店&感官动词"},
+  {en:"receipt", zh:"发票", type:"n.", section:"p22", example:"Keep your receipt for returns.", topic:"P22-23 商店&感官动词"},
+  {en:"cash", zh:"现金", type:"n.", section:"p22", example:"Can I pay by cash?", topic:"P22-23 商店&感官动词"},
+  {en:"jumper", zh:"套头毛衣", type:"n.", section:"p22", example:"I bought a warm jumper.", topic:"P22-23 商店&感官动词"},
+  {en:"contactless card", zh:"非接触卡", type:"n.", section:"p22", example:"Can I pay with my contactless card?", topic:"P22-23 商店&感官动词"},
+
+  // P24-25 Clothing & Items
+  {en:"belt", zh:"腰带", type:"n.", section:"p24", example:"He wears a leather belt.", topic:"P24-25 服装&物品"},
+  {en:"dress", zh:"连衣裙", type:"n.", section:"p24", example:"She bought a red dress.", topic:"P24-25 服装&物品"},
+  {en:"trainers", zh:"运动鞋", type:"n.", section:"p24", example:"I need new trainers for PE.", topic:"P24-25 服装&物品"},
+  {en:"boots", zh:"靴子", type:"n.", section:"p24", example:"She wears boots in winter.", topic:"P24-25 服装&物品"},
+  {en:"jacket", zh:"夹克衫", type:"n.", section:"p24", example:"That jacket looks cool.", topic:"P24-25 服装&物品"},
+  {en:"T-shirt", zh:"T恤", type:"n.", section:"p24", example:"He has many T-shirts.", topic:"P24-25 服装&物品"},
+  {en:"shorts", zh:"短裤", type:"n.", section:"p24", example:"I wear shorts in summer.", topic:"P24-25 服装&物品"},
+  {en:"trousers", zh:"长裤", type:"n.", section:"p24", example:"These trousers are too long.", topic:"P24-25 服装&物品"},
+  {en:"valuable", zh:"值钱的，宝贵的", type:"adj.", section:"p24", example:"This watch is very valuable.", topic:"P24-25 服装&物品"},
+  {en:"last", zh:"持续", type:"v.", section:"p24", example:"The meeting lasted two hours.", topic:"P24-25 服装&物品"},
+  {en:"upload", zh:"上传", type:"v.", section:"p24", example:"I uploaded the photos online.", topic:"P24-25 服装&物品"},
+  {en:"imagination", zh:"想象力", type:"n.", section:"p24", example:"She has a great imagination.", topic:"P24-25 服装&物品"},
+  {en:"maybe", zh:"也许", type:"adv.", section:"p24", example:"Maybe we can go tomorrow.", topic:"P24-25 服装&物品"},
+  {en:"magazine", zh:"杂志", type:"n.", section:"p24", example:"I read a fashion magazine.", topic:"P24-25 服装&物品"},
+  {en:"website", zh:"网页", type:"n.", section:"p24", example:"Check our website for details.", topic:"P24-25 服装&物品"},
+  {en:"newspaper", zh:"报纸", type:"n.", section:"p24", example:"Dad reads the newspaper every morning.", topic:"P24-25 服装&物品"},
+  {en:"uniform", zh:"校服", type:"n.", section:"p24", example:"Students wear uniforms at school.", topic:"P24-25 服装&物品"},
+  {en:"science", zh:"科学", type:"n.", section:"p24", example:"Science is my favourite subject.", topic:"P24-25 服装&物品"},
+  {en:"remember", zh:"记得", type:"v.", section:"p24", example:"Remember to bring your book.", topic:"P24-25 服装&物品"},
+  {en:"normally", zh:"通常", type:"adv.", section:"p24", example:"I normally walk to school.", topic:"P24-25 服装&物品"},
+  {en:"on one's own", zh:"某人自己", type:"phrase", section:"p24", example:"I like going for a walk on my own.", topic:"P24-25 服装&物品"},
+  {en:"a few", zh:"一些（可数）", type:"phrase", section:"p24", example:"I have a few friends here.", topic:"P24-25 服装&物品"},
+  {en:"a little", zh:"一些（不可数）", type:"phrase", section:"p24", example:"There's a little milk left.", topic:"P24-25 服装&物品"},
+
+  // P26-27 Money & Countries
+  {en:"leader", zh:"领导", type:"n.", section:"p26", example:"She is a great leader.", topic:"P26-27 货币&国家"},
+  {en:"gate", zh:"大门", type:"n.", section:"p26", example:"Meet me at the school gate.", topic:"P26-27 货币&国家"},
+  {en:"banknote", zh:"钞票", type:"n.", section:"p26", example:"The banknote has a portrait on it.", topic:"P26-27 货币&国家"},
+  {en:"credit card", zh:"信用卡", type:"n.", section:"p26", example:"Can I pay by credit card?", topic:"P26-27 货币&国家"},
+  {en:"identical", zh:"完全相同的", type:"adj.", section:"p26", example:"The two coins are identical.", topic:"P26-27 货币&国家"},
+  {en:"coin", zh:"硬币", type:"n.", section:"p26", example:"I have some coins in my pocket.", topic:"P26-27 货币&国家"},
+  {en:"design", zh:"设计", type:"n./v.", section:"p26", example:"The design is beautiful.", topic:"P26-27 货币&国家"},
+  {en:"example", zh:"例子", type:"n.", section:"p26", example:"Can you give me an example?", topic:"P26-27 货币&国家"},
+  {en:"celebrate", zh:"庆祝", type:"v.", section:"p26", example:"We celebrate New Year together.", topic:"P26-27 货币&国家"},
+  {en:"Mexico", zh:"墨西哥", type:"n.", section:"p26", example:"Mexico is famous for its food.", topic:"P26-27 货币&国家"},
+  {en:"Turkey", zh:"土耳其", type:"n.", section:"p26", example:"Turkey has beautiful architecture.", topic:"P26-27 货币&国家"},
+  {en:"Europe", zh:"欧洲", type:"n.", section:"p26", example:"Paris is in Europe.", topic:"P26-27 货币&国家"},
+  {en:"Brazil", zh:"巴西", type:"n.", section:"p26", example:"Brazil is famous for football.", topic:"P26-27 货币&国家"},
+  {en:"currency", zh:"货币", type:"n.", section:"p26", example:"What currency do they use?", topic:"P26-27 货币&国家"},
+  {en:"Mexican", zh:"墨西哥的", type:"adj.", section:"p26", example:"I love Mexican food.", topic:"P26-27 货币&国家"},
+  {en:"well-known", zh:"著名的", type:"adj.", section:"p26", example:"He is a well-known singer.", topic:"P26-27 货币&国家"},
+  {en:"portrait", zh:"肖像", type:"n.", section:"p26", example:"The portrait looks real.", topic:"P26-27 货币&国家"},
+  {en:"founder", zh:"创立者", type:"n.", section:"p26", example:"He is the founder of the school.", topic:"P26-27 货币&国家"},
+  {en:"republic", zh:"共和国", type:"n.", section:"p26", example:"It is a republic country.", topic:"P26-27 货币&国家"},
+  {en:"figure", zh:"人物", type:"n.", section:"p26", example:"She is an important figure.", topic:"P26-27 货币&国家"},
+  {en:"exactly", zh:"精确地；恰好；完全", type:"adv.", section:"p26", example:"I know exactly how she felt.", topic:"P26-27 货币&国家"},
+  {en:"entrance", zh:"入口", type:"n.", section:"p26", example:"The entrance is over there.", topic:"P26-27 货币&国家"},
+  {en:"represent", zh:"代表", type:"v.", section:"p26", example:"The coin represents our country.", topic:"P26-27 货币&国家"},
+  {en:"architecture", zh:"建筑", type:"n.", section:"p26", example:"The architecture is amazing.", topic:"P26-27 货币&国家"},
+  {en:"various", zh:"各种各样的", type:"adj.", section:"p26", example:"There are various shops here.", topic:"P26-27 货币&国家"},
+  {en:"perhaps", zh:"也许", type:"adv.", section:"p26", example:"Perhaps we should go now.", topic:"P26-27 货币&国家"},
+  {en:"peso", zh:"比索", type:"n.", section:"p26", example:"The peso is Mexico's currency.", topic:"P26-27 货币&国家"},
+  {en:"euro", zh:"欧元", type:"n.", section:"p26", example:"Many countries use the euro.", topic:"P26-27 货币&国家"},
+  {en:"dollar", zh:"美元", type:"n.", section:"p26", example:"The book costs ten dollars.", topic:"P26-27 货币&国家"},
+  {en:"description", zh:"描述", type:"n.", section:"p26", example:"The description is very clear.", topic:"P26-27 货币&国家"},
+  {en:"suggestion", zh:"建议", type:"n.", section:"p26", example:"That's a good suggestion.", topic:"P26-27 货币&国家"},
+
+  // Grammar key points
+  {en:"look + adj.", zh:"看起来…（感官动词）", type:"grammar", section:"grammar", example:"You look happy today.", topic:"语法要点"},
+  {en:"sound + adj.", zh:"听起来…（感官动词）", type:"grammar", section:"grammar", example:"That sounds great!", topic:"语法要点"},
+  {en:"smell + adj.", zh:"闻起来…（感官动词）", type:"grammar", section:"grammar", example:"The cake smells sweet.", topic:"语法要点"},
+  {en:"taste + adj.", zh:"尝起来…（感官动词）", type:"grammar", section:"grammar", example:"It tastes delicious.", topic:"语法要点"},
+  {en:"be better at", zh:"更擅长…", type:"grammar", section:"grammar", example:"You're better at clothes than me.", topic:"语法要点"},
+  {en:"suggest doing", zh:"建议做某事", type:"grammar", section:"grammar", example:"I suggest going by bus.", topic:"语法要点"},
+  {en:"advise sb. to do", zh:"建议某人做某事", type:"grammar", section:"grammar", example:"He advised me to study hard.", topic:"语法要点"},
+  {en:"on holiday", zh:"在度假", type:"phrase", section:"grammar", example:"We are on holiday in Spain.", topic:"语法要点"},
+];
+
+const sentenceData = [
+  {words:["What","are","you","up","to"], zh:"你在忙什么？", section:"p20"},
+  {words:["I'm","looking","for","a","new","jacket"], zh:"我在寻找一件新的夹克。", section:"p20"},
+  {words:["It","looks","old-fashioned","though"], zh:"尽管它看起来有点过时。", section:"p20"},
+  {words:["She's","doing","some","shopping","at","the","moment"], zh:"她此时此刻正在购物。", section:"p20"},
+  {words:["That","sounds","like","a","bad","idea"], zh:"那听起来是个坏主意。", section:"p22"},
+  {words:["It","tastes","horrible"], zh:"它尝起来很糟糕。", section:"p22"},
+  {words:["How","much","do","they","cost"], zh:"他们花费多少钱？", section:"p22"},
+  {words:["I","like","going","on","my","own"], zh:"我喜欢一个人走。", section:"p24"},
+  {words:["I","always","go","for","a","walk","on","Sunday"], zh:"我总是在周日散步。", section:"p24"},
+  {words:["Can","I","pay","with","my","contactless","card"], zh:"我可以用非接触卡吗？", section:"p22"},
+  {words:["The","food","smells","delicious"], zh:"食物闻起来很美味。", section:"p22"},
+  {words:["You","look","great","today"], zh:"你今天看起来很棒。", section:"p22"},
+  {words:["We","use","credit","cards","more","and","more"], zh:"我们越来越多地使用信用卡。", section:"p26"},
+  {words:["How","are","things","with","you"], zh:"你最近怎么样？", section:"p26"},
+  {words:["I","know","exactly","how","she","felt"], zh:"我完全清楚她的感受。", section:"p26"},
+];
+
+const fillBlankData = [
+  {sentence:"This shirt is very ___. (便宜的)", answer:"cheap", section:"p20", hint:"形容词"},
+  {sentence:"Don't ___ your money. (浪费)", answer:"waste", section:"p20", hint:"动词"},
+  {sentence:"The shop was very ___. (拥挤的)", answer:"crowded", section:"p20", hint:"形容词"},
+  {sentence:"I bought a ___ bike. (二手的)", answer:"second-hand", section:"p20", hint:"复合形容词"},
+  {sentence:"That ___ like a good idea. (听起来)", answer:"sounds", section:"p22", hint:"感官动词"},
+  {sentence:"The food ___ delicious. (闻起来)", answer:"smells", section:"p22", hint:"感官动词"},
+  {sentence:"The soup ___ awful. (尝起来)", answer:"tastes", section:"p22", hint:"感官动词"},
+  {sentence:"You ___ great today! (看起来)", answer:"look", section:"p22", hint:"感官动词"},
+  {sentence:"Can I pay ___ cash? (用)", answer:"by", section:"p22", hint:"by + 方式"},
+  {sentence:"I have a ___ friends here. (一些)", answer:"few", section:"p24", hint:"修饰可数名词，肯定含义"},
+  {sentence:"There's a ___ milk left. (一些)", answer:"little", section:"p24", hint:"修饰不可数名词，肯定含义"},
+  {sentence:"Tom isn't kind so he has ___ friends. (几乎没有)", answer:"few", section:"p24", hint:"否定含义，可数"},
+  {sentence:"I like going for a walk on my ___. (自己)", answer:"own", section:"p24", hint:"on one's own"},
+  {sentence:"The two coins are ___. (完全相同的)", answer:"identical", section:"p26", hint:"形容词"},
+  {sentence:"I know ___ how she felt. (完全)", answer:"exactly", section:"p26", hint:"副词"},
+  {sentence:"He is a ___ singer. (著名的)", answer:"well-known", section:"p26", hint:"复合形容词"},
+  {sentence:"The coin ___ our country. (代表)", answer:"represents", section:"p26", hint:"动词，注意三单"},
+  {sentence:"I suggest ___ by bus. (go)", answer:"going", section:"grammar", hint:"suggest doing"},
+  {sentence:"He advised me ___ hard. (study)", answer:"to study", section:"grammar", hint:"advise sb. to do"},
+];
+
+const mcData = [
+  {q:"'expensive' 的反义词是？", options:["cheap","rich","poor","free"], answer:0, section:"p20"},
+  {q:"'second-hand' 是什么意思？", options:["二手的","全新的","昂贵的","便宜的"], answer:0, section:"p20"},
+  {q:"'a waste of time' 是什么意思？", options:["浪费时间","节省时间","一段时间","按时"], answer:0, section:"p20"},
+  {q:"哪个不是商店类型？", options:["bookshop","supermarket","comfortable","coffee shop"], answer:2, section:"p22"},
+  {q:"'The food ___ delicious.' 感官动词填什么？", options:["looks","sounds","smells","tastes"], answer:3, section:"p22"},
+  {q:"'That ___ like a good idea.' 填什么？", options:["looks","sounds","smells","tastes"], answer:1, section:"p22"},
+  {q:"'You ___ great today!' 填什么？", options:["look","sound","smell","taste"], answer:0, section:"p22"},
+  {q:"哪组词都是成对出现的（用pair修饰）？", options:["belt, dress","trainers, boots","jumper, shirt","coin, cash"], answer:1, section:"p24"},
+  {q:"'a few' 修饰什么？", options:["不可数名词","可数名词复数","可数名词单数","动词"], answer:1, section:"p24"},
+  {q:"'a little' 修饰什么？", options:["不可数名词","可数名词复数","可数名词单数","动词"], answer:0, section:"p24"},
+  {q:"'few' 和 'a few' 的区别是？", options:["意思完全相同","few表示几乎没有（否定）","a few表示几乎没有","没有区别"], answer:1, section:"p24"},
+  {q:"'on my own' 是什么意思？", options:["在我的家里","我自己一个人","拥有某物","独自拥有"], answer:1, section:"p24"},
+  {q:"'identical' 是什么意思？", options:["不同的","完全相同的","类似的","相反的"], answer:1, section:"p26"},
+  {q:"'exactly' 不包含哪个意思？", options:["精确地","恰好","大概","完全"], answer:2, section:"p26"},
+  {q:"'well-known' 的近义词是？", options:["unknown","famous","awful","cheap"], answer:1, section:"p26"},
+  {q:"'suggest ___' 正确形式是？", options:["to go","going","go","went"], answer:1, section:"grammar"},
+  {q:"'advise sb. ___' 正确形式是？", options:["doing","to do","do","done"], answer:1, section:"grammar"},
+  {q:"哪个是感官动词？", options:["think","believe","look","want"], answer:2, section:"grammar"},
+];
+
+let state = {
+  mode: 'flashcard', topic: 'all', currentQuestions: [], currentIdx: 0,
+  score: 0, correct: 0, wrong: 0, wrongList: [],
+  totalStars: parseInt(localStorage.getItem('think1_u2_stars') || '0'),
+  modeLabel: '', topicLabel: '全部', startTime: 0,
+  matchSelected: null, matchCorrect: 0,
+};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function getFilteredVocab() { return state.topic==='all' ? vocabData : vocabData.filter(v=>v.section===state.topic); }
+function getFilteredSentences() { return state.topic==='all' ? sentenceData : sentenceData.filter(s=>s.section===state.topic); }
+function getFilteredFillBlanks() { return state.topic==='all' ? fillBlankData : fillBlankData.filter(f=>f.section===state.topic); }
+function getFilteredMC() { return state.topic==='all' ? mcData : mcData.filter(m=>m.section===state.topic); }
+function updateStars() {
+  document.getElementById('starCount').textContent = state.totalStars;
+  localStorage.setItem('think1_u2_stars', state.totalStars);
+}
+
+function startExercise() {
+  state.currentIdx=0; state.score=0; state.correct=0; state.wrong=0; state.wrongList=[]; state.startTime=Date.now();
+  if (state.mode==='flashcard') { state.currentQuestions=shuffle(getFilteredVocab()); state.modeLabel='翻卡记忆'; }
+  else if (state.mode==='matching') { state.currentQuestions=shuffle(getFilteredVocab()).slice(0,8); state.matchCorrect=0; state.matchSelected=null; state.modeLabel='连线匹配'; }
+  else if (state.mode==='fillblank') { state.currentQuestions=shuffle(getFilteredFillBlanks()); state.modeLabel='填空题'; }
+  else if (state.mode==='multiplechoice') { state.currentQuestions=shuffle(getFilteredMC()); state.modeLabel='选择题'; }
+  else if (state.mode==='ordering') { state.currentQuestions=shuffle(getFilteredSentences()); state.modeLabel='句子排序'; }
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const area=document.getElementById('contentArea');
+  if (state.currentIdx>=state.currentQuestions.length) { showResults(); return; }
+  const pct=Math.round((state.currentIdx/state.currentQuestions.length)*100);
+  const q=state.currentQuestions[state.currentIdx];
+  let html=`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="question-num">第 ${state.currentIdx+1} / ${state.currentQuestions.length} 题</div>`;
+  if (state.mode==='flashcard') html+=renderFlashcard(q);
+  else if (state.mode==='matching') html+=renderMatching();
+  else if (state.mode==='fillblank') html+=renderFillBlank(q);
+  else if (state.mode==='multiplechoice') html+=renderMC(q);
+  else if (state.mode==='ordering') html+=renderOrdering(q);
+  area.innerHTML=html;
+  if (state.mode==='matching') attachMatchingEvents();
+}
+
+function renderFlashcard(q) {
+  return `<div class="flashcard-container"><div class="flashcard" id="fc" onclick="flipCard()"><div class="flashcard-front"><div class="flashcard-word">${q.en}</div><div class="flashcard-type">${q.type}</div><div class="flashcard-section">📖 ${q.topic}</div></div><div class="flashcard-back"><div class="flashcard-meaning">${q.zh}</div><div class="flashcard-example">${q.example}</div><div class="flashcard-section">📖 ${q.topic}</div></div></div></div><div class="flashcard-hint">👆 点卡片翻转</div><div class="flashcard-actions"><button class="flashcard-btn btn-dont" onclick="fcMarkWrong()">😕 不认识</button><button class="flashcard-btn btn-know" onclick="fcMarkRight()">😊 认识</button></div>`;
+}
+function flipCard() { document.getElementById('fc').classList.toggle('flipped'); }
+function fcMarkRight() { state.correct++; state.score++; state.totalStars++; updateStars(); state.currentIdx++; renderQuestion(); }
+function fcMarkWrong() { const q=state.currentQuestions[state.currentIdx]; state.wrong++; state.wrongList.push({q:q.en,a:q.zh,mode:'翻卡'}); state.currentIdx++; renderQuestion(); }
+
+function renderMatching() {
+  const items=state.currentQuestions; const enItems=shuffle(items); const zhItems=shuffle(items);
+  let html='<div style="text-align:center;font-size:14px;color:var(--c-text-light);margin-bottom:12px;">左边点英文，右边点中文配对</div><div class="matching-grid"><div style="display:flex;flex-direction:column;gap:10px;">';
+  enItems.forEach((item,i)=>{ html+=`<div class="match-item" data-side="en" data-id="${i}" data-value="${item.en}">${item.en}</div>`; });
+  html+='</div><div style="display:flex;flex-direction:column;gap:10px;">';
+  zhItems.forEach((item,i)=>{ html+=`<div class="match-item" data-side="zh" data-id="${i}" data-value="${item.en}">${item.zh}</div>`; });
+  html+='</div></div>'; return html;
+}
+function attachMatchingEvents() { document.querySelectorAll('.match-item').forEach(el=>el.addEventListener('click',()=>handleMatchClick(el))); }
+function handleMatchClick(el) {
+  if (el.classList.contains('correct')||el.classList.contains('wrong')) return;
+  if (!state.matchSelected) { state.matchSelected=el; el.classList.add('selected'); }
+  else {
+    if (state.matchSelected.dataset.side===el.dataset.side) { state.matchSelected.classList.remove('selected'); state.matchSelected=el; el.classList.add('selected'); return; }
+    if (state.matchSelected.dataset.value===el.dataset.value) {
+      state.matchSelected.classList.remove('selected'); state.matchSelected.classList.add('correct'); el.classList.add('correct');
+      state.correct++; state.score++; state.matchCorrect++; state.totalStars++; updateStars();
+      if (state.matchCorrect>=state.currentQuestions.length) setTimeout(()=>{state.currentIdx=state.currentQuestions.length;showResults();},800);
+    } else {
+      const prev=state.matchSelected; prev.classList.remove('selected'); prev.classList.add('wrong'); el.classList.add('wrong');
+      state.wrong++; state.wrongList.push({q:prev.dataset.value,a:'配对错误',mode:'连线'});
+      setTimeout(()=>{prev.classList.remove('wrong');el.classList.remove('wrong');},600);
+    }
+    state.matchSelected=null;
+  }
+}
+
+function renderFillBlank(q) {
+  const parts=q.sentence.split('___');
+  let html='<div class="fill-blank-question">';
+  parts.forEach((part,i)=>{ html+=part; if(i<parts.length-1) html+=`<span class="blank" id="blank-${i}" onclick="clearBlank(${i})">______</span>`; });
+  html+='</div>';
+  if(q.hint) html+=`<div style="text-align:center;font-size:13px;color:var(--c-primary);margin-top:8px;">💡 ${q.hint}</div>`;
+  const words=shuffle([q.answer,...getDistractors(q.answer)]);
+  html+='<div class="word-bank">';
+  words.forEach(w=>{ html+=`<span class="word-chip" onclick="fillWord('${w.replace(/'/g,"\\'")}', this)">${w}</span>`; });
+  html+='</div><div style="text-align:center;margin-top:16px;"><button class="action-btn btn-primary" onclick="checkFillBlank('${q.answer.replace(/'/g,"\\'")}')">✅ 确认</button></div>';
+  return html;
+}
+function getDistractors(answer) {
+  const all=vocabData.map(v=>v.en).filter(w=>w!==answer);
+  return shuffle(all).slice(0,4);
+}
+let currentFillWord='';
+function fillWord(word,el) {
+  document.querySelectorAll('.word-chip').forEach(c=>c.classList.remove('used'));
+  el.classList.add('used'); currentFillWord=word;
+  const blank=document.getElementById('blank-0');
+  if(blank){blank.textContent=word;blank.classList.add('filled');}
+}
+function clearBlank(idx) {
+  const blank=document.getElementById(`blank-${idx}`); blank.textContent='______'; blank.classList.remove('filled');
+  document.querySelectorAll('.word-chip').forEach(c=>c.classList.remove('used')); currentFillWord='';
+}
+function checkFillBlank(answer) {
+  const blank=document.getElementById('blank-0');
+  if(!blank||!blank.classList.contains('filled')){alert('请先选择一个答案');return;}
+  const userAnswer=blank.textContent;
+  if(userAnswer.toLowerCase()===answer.toLowerCase()){
+    blank.classList.add('correct'); state.correct++; state.score++; state.totalStars++; updateStars();
+    setTimeout(()=>{state.currentIdx++;renderQuestion();},1000);
+  } else {
+    blank.classList.add('wrong'); state.wrong++; state.wrongList.push({q:`填空: ${state.currentQuestions[state.currentIdx].sentence}`,a:answer,mode:'填空'});
+    setTimeout(()=>{blank.textContent=answer;blank.classList.remove('wrong');blank.classList.add('correct');setTimeout(()=>{state.currentIdx++;renderQuestion();},1500);},1200);
+  }
+}
+
+function renderMC(q) {
+  let html=`<div class="mc-question">${q.q}</div><div class="mc-options">`;
+  q.options.forEach((opt,i)=>{ html+=`<div class="mc-option" data-idx="${i}" onclick="checkMC(${i},${q.answer})">${String.fromCharCode(65+i)}. ${opt}</div>`; });
+  html+='</div>'; return html;
+}
+function checkMC(selected,correct) {
+  const options=document.querySelectorAll('.mc-option'); options.forEach(o=>o.classList.add('disabled'));
+  if(selected===correct){
+    options[selected].classList.add('correct'); state.correct++; state.score++; state.totalStars++; updateStars();
+    setTimeout(()=>{state.currentIdx++;renderQuestion();},1200);
+  } else {
+    options[selected].classList.add('wrong'); options[correct].classList.add('correct'); state.wrong++;
+    state.wrongList.push({q:state.currentQuestions[state.currentIdx].q,a:String.fromCharCode(65+correct),mode:'选择'});
+    setTimeout(()=>{state.currentIdx++;renderQuestion();},2000);
+  }
+}
+
+let soTarget=[];
+function renderOrdering(q) {
+  soTarget=[]; const shuffled=shuffle(q.words);
+  let html=`<div class="so-translation">💬 ${q.zh}</div><div class="so-target" id="soTarget"></div><div class="so-bank" id="soBank">`;
+  shuffled.forEach((w,i)=>{ html+=`<span class="so-word" data-word="${w}" data-idx="${i}" onclick="moveToTarget(${i})">${w}</span>`; });
+  html+='</div><div style="text-align:center;margin-top:16px;"><button class="action-btn btn-primary" onclick="checkOrdering()">✅ 确认</button><button class="action-btn btn-secondary" onclick="resetOrdering()">🔄 重置</button></div>';
+  return html;
+}
+function moveToTarget(bankIdx) {
+  const el=document.querySelector(`.so-word[data-idx="${bankIdx}"]`);
+  if(!el||el.classList.contains('in-target'))return;
+  soTarget.push(el.dataset.word); el.classList.add('in-target'); el.style.visibility='hidden'; renderTarget();
+}
+function removeFromTarget(idx) {
+  const word=soTarget[idx]; soTarget.splice(idx,1);
+  document.querySelectorAll('.so-word').forEach(el=>{if(el.dataset.word===word&&el.classList.contains('in-target')){el.classList.remove('in-target');el.style.visibility='visible';}});
+  renderTarget();
+}
+function renderTarget() {
+  const target=document.getElementById('soTarget');
+  if(soTarget.length===0){target.innerHTML='<span style="color:var(--c-text-light);font-size:13px;">点下方单词组句</span>';return;}
+  target.innerHTML=soTarget.map((w,i)=>`<span class="so-word" style="background:var(--c-green);" onclick="removeFromTarget(${i})">${w}</span>`).join('');
+}
+function checkOrdering() {
+  const q=state.currentQuestions[state.currentIdx]; const userAnswer=soTarget.join(' '); const correctAnswer=q.words.join(' ');
+  if(userAnswer===correctAnswer){
+    state.correct++; state.score++; state.totalStars++; updateStars();
+    document.getElementById('soTarget').style.borderColor='var(--c-green)';
+    setTimeout(()=>{state.currentIdx++;renderQuestion();},1200);
+  } else {
+    document.getElementById('soTarget').style.borderColor='var(--c-red)'; state.wrong++;
+    state.wrongList.push({q:`排序: ${q.zh}`,a:correctAnswer,mode:'排序'});
+    setTimeout(()=>{soTarget=[...q.words];renderTarget();document.getElementById('soTarget').style.borderColor='var(--c-green)';setTimeout(()=>{state.currentIdx++;renderQuestion();},1500);},1500);
+  }
+}
+function resetOrdering() {
+  soTarget=[]; document.querySelectorAll('.so-word').forEach(el=>{el.classList.remove('in-target');el.style.visibility='visible';}); renderTarget();
+}
+
+function showResults() {
+  const area=document.getElementById('contentArea');
+  const total=state.currentQuestions.length;
+  const pct=total>0?Math.round((state.correct/total)*100):0;
+  const emoji=pct>=80?'🎉':pct>=60?'👍':pct>=40?'💪':'📖';
+  const msg=pct>=80?'太棒了！':pct>=60?'不错！继续加油！':pct>=40?'还需练习哦！':'多看几遍词汇卡吧！';
+  let wrongHtml='';
+  if(state.wrongList.length>0){
+    wrongHtml='<div class="wrong-list"><h3>❌ 错题回顾</h3>';
+    state.wrongList.forEach(w=>{wrongHtml+=`<div class="wrong-item">${w.q} → <span class="correct-answer">${w.a}</span></div>`;});
+    wrongHtml+='</div>';
+  }
+  const seconds=Math.round((Date.now()-state.startTime)/1000);
+  const timeStr=`${Math.floor(seconds/60)}分${seconds%60}秒`;
+  area.innerHTML=`<div class="results-screen"><div style="font-size:48px;">${emoji}</div><div class="results-score">${pct}<span class="total">分</span></div><div class="results-msg">${msg}</div><div class="results-detail"><div class="results-stat"><div class="num" style="color:var(--c-green)">${state.correct}</div><div class="label">答对</div></div><div class="results-stat"><div class="num" style="color:var(--c-red)">${state.wrong}</div><div class="label">答错</div></div><div class="results-stat"><div class="num" style="color:var(--c-orange)">+${state.score}</div><div class="label">本轮⭐</div></div><div class="results-stat"><div class="num" style="color:var(--c-purple)">${state.totalStars}</div><div class="label">总⭐</div></div><div class="results-stat"><div class="num" style="color:var(--c-blue)">${timeStr}</div><div class="label">用时</div></div></div>${wrongHtml}<div class="submit-section"><h3>📤 提交成绩给老师</h3><input type="text" id="studentName" placeholder="输入你的姓名" /><button class="copy-btn" onclick="generateScoreCode()">生成成绩码</button><div class="code-output" id="codeOutput"></div><button class="copy-btn" id="copyBtn" style="display:none;background:var(--c-blue);" onclick="copyScoreCode()">📋 复制成绩码</button></div><div class="action-bar"><button class="action-btn btn-secondary" onclick="restartSameMode()">🔄 再练一次</button><button class="action-btn btn-primary" onclick="goHome()">🏠 返回首页</button></div></div>`;
+}
+
+function generateScoreCode() {
+  const name=document.getElementById('studentName').value.trim();
+  if(!name){alert('请输入姓名');return;}
+  const seconds=Math.round((Date.now()-state.startTime)/1000);
+  const data={n:name,u:'THINK1-U2',m:state.modeLabel,t:state.topicLabel,s:state.score,c:state.correct,w:state.wrong,total:state.currentQuestions.length,time:seconds,date:new Date().toISOString().slice(0,10)};
+  const code='EP-'+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const output=document.getElementById('codeOutput'); output.textContent=code; output.style.display='block';
+  document.getElementById('copyBtn').style.display='block'; output.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function copyScoreCode() {
+  const code=document.getElementById('codeOutput').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(code).then(()=>{const btn=document.getElementById('copyBtn');btn.textContent='✅ 已复制！发给你老师吧';setTimeout(()=>{btn.textContent='📋 复制成绩码';},2000);});}
+  else{const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);const btn=document.getElementById('copyBtn');btn.textContent='✅ 已复制！';setTimeout(()=>{btn.textContent='📋 复制成绩码';},2000);}
+}
+function restartSameMode(){startExercise();}
+function goHome(){
+  state.currentIdx=0; state.currentQuestions=[];
+  document.getElementById('contentArea').innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--c-text-light);"><div style="font-size:48px;">📚</div><p style="margin-top:12px;font-size:16px;">选择上方练习模式开始吧！</p><div class="grammar-tip" style="text-align:left;max-width:500px;margin:20px auto 0;"><strong>📖 本单元语法要点：</strong><br>1. 感官动词 + adj.：look/sound/smell/taste + adj.<br>2. a few vs few vs a little vs little<br>3. on one's own = by oneself<br>4. because + 句子 / because of + 名词词组<br>5. suggest doing sth.（不能说 suggest to do）<br>6. advise sb. to do sth.（advice 是名词，advise 是动词）<br>7. 现在进行时 vs 一般现在时<br>8. Action verbs vs Non-action verbs<br>9. other / the other / others / the others / another</div></div>`;
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); state.mode=btn.dataset.mode;
+    state.modeLabel=btn.textContent.trim().split(' ')[1]||btn.textContent.trim(); startExercise();
+  });
+});
+document.querySelectorAll('.filter-chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active'); state.topic=chip.dataset.topic; state.topicLabel=chip.textContent.trim(); startExercise();
+  });
+});
+
+updateStars(); goHome();
+</script>
+</body>
+</html>
